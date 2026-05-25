@@ -396,7 +396,7 @@ def player():
         except:
             print("Try again...")
 
-    CLIENT = socket.socket(socket.AF_NET, socket.SOCK_STREAM)
+    CLIENT = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     CLIENT.connect((HOST, PORT))
 
     player_runtime()
