@@ -248,6 +248,14 @@ def check_sunk(board, state):
             send(SHIP[i] + " has sunk!")
     return
 
+def ship_remaining_to_string(ships):
+    text = "Enemy Remaining: "
+    for i in range(0,len(ship)):
+        if ships[i] = True:
+            text = text + SHIP[i]
+            text = text + " "
+    return text
+
 def servers_turn(board):
     row = 0
     column = 0
@@ -263,8 +271,9 @@ def server_runtime():
     server_loss = False
     
     while player_loss == False and server_loss == False:
-        print(board_to_string(player_board))
-        print(board_to_string(player_guess))
+        send(board_to_string(player_board) + "\n")
+        send(board_to_string(player_guess) + "\n")
+        send(ship_remaining_to_string(server_ships) + "\n")
 
         #player's turn
         valid_move = False
