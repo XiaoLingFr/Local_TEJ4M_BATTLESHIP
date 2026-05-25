@@ -2,16 +2,16 @@ import random
 import socket
 
 ZHAO_LANG_SYNTAX = {
-    "PRINT" = "PRNT",
-    "IMMEDIATE REPLAY" = "IREP",
-    "PRINT WITH REPLY" = "PRIREP"
+    "PRINT" : "PRNT",
+    "IMMEDIATE REPLY" : "IREP",
+    "PRINT WITH REPLY" : "PRIREP"
+    "GAME END" : "GM_END"
 }
 
 conn = None
 addr = None
 SERVER = None
 
-GAME_END = "GM_END"
 SIZE = 10
 SHIP = ["carrier", "battleship", "cruiser","submarine","destroyer"]
 SHIP_DATA = {
@@ -103,6 +103,19 @@ server_guess = [
 ]
 
 #=====UTILITIES=====
+def menu():
+    valid_input == False
+    choice == 0
+    print("Welcome To Battleship\n1.Setup Server\n2. Setup as player")
+    while valid_input == False:
+        try:
+            choice = int(input(">> "))
+            if choice == 1 or choice == 2:
+               valid_input = True 
+        except:
+            print("Try again")
+    return choice
+
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -115,16 +128,20 @@ def get_ip():
     return ip
 
 def send(text):
-    conn.sendall(text.encode())
+    conn.sendall((ZHAO_LANG_SYNTAX["PRINT"] +" "+ text).encode())
 
 def recieve():
+    conn.sendall(ZHAO_LANG_SYNTAX["IMMEDIATE REPLY"])
     data = conn.recv(1024).decode()
     return data
 
-def send_and_recieve():
-    conn.sendall(text.encode())
+def send_and_recieve(text):
+    conn.sendall((ZHAO_LANG_SYNTAX["PRINT WITH REPLY"] + " " + text).encode())
     data = conn.recv(1024).decode()
     return data
+
+def end_signal():
+    conn.sendall(ZHAO_LANG_SYNTAX["END GAME"])
 
 def board_to_string(board):
     string = ""
@@ -172,19 +189,18 @@ def player_setup():
         valid_placement = False
         while(valid_placement == False):
             try:
-                print(board_to_string(player_board))
-                print("Setting up for: " + SHIP[i])
-
-                print("Co-ordinates (Letter, Row Number): ",end="")
-                reply = input()
+                send((board_to_string(player_board)))
+                send(("Setting up for: " + SHIP[i]))
+                
+                reply = send_and_recieve(("Co-ordinates (Letter, Row Number): ",end=""))
                 result = input_to_coordinate(reply)
                 if result != None:
                     row, column = result
-                    print("Orientation [V (Vertical)/ H (Horizontal)]: ", end="")
-                    orientation = input()
+                    send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ", end="")
+                    orientation = send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ", end="")
                     valid_placement = place_ship(row, column, SHIP[i], player_board, orientation)
             except IndexError:
-                print("Try again")
+                send("Try again")
     return
 
 def server_setup():
@@ -229,7 +245,7 @@ def check_sunk(board, state):
         if state[i] != shadow_state[i]:
             #update ship information
             state[i] = shadow_state[i]
-            print(SHIP[i] + " has sunk!")
+            send(SHIP[i] + " has sunk!")
     return
 
 def servers_turn(board):
@@ -238,8 +254,8 @@ def servers_turn(board):
 
     return (row, column)
 
-#=====Runtime=====
-def runtime():
+#=====Runtimes=====
+def server_runtime():
     player_setup()
     server_setup()
 
@@ -253,8 +269,7 @@ def runtime():
         #player's turn
         valid_move = False
         while valid_move == False:
-            print("Where to hit?")
-            reply = input()
+            reply = send_and_recieve("Where to hit?")
             res = input_to_coordinate(reply)
             if res != None:
                 row, column = res
@@ -270,9 +285,9 @@ def runtime():
                         server_board[row][column] = "?"
                     valid_move = True
                 else:
-                    print("Try again")
+                    send("Try again")
             else:
-                print("Try inputting a valid co-ordinate")
+                send("Try inputting a valid co-ordinate")
         #check if a ship has been sunk
         check_sunk(server_board, server_ships)
 
@@ -292,11 +307,11 @@ def runtime():
         player_loss = check_loss(player_board)
     
     if player_loss == True:
-        print("You lost! Reconnect to try again.")
+        send("You lost! Reconnect to try again.")
     elif server_loss == True:
-        print("You won! Reconnect to play again!")
+        send("You won! Reconnect to play again!")
     else:
-        print("How?")
+        send("How?")
 
 def server():
     #setup server
@@ -322,9 +337,71 @@ def server():
     conn,addr = SERVER.accept()
     print("Connected to: " + addr)
 
-    runtime()
+    server_runtime()
 
     conn.close()
     SERVER.close()
 
     return
+
+#client part of the script
+
+HOST = None
+PORT = None
+CLIENT = None
+
+RUNNING = True
+
+def interpret(text):
+    parse = text.split(" ")
+    if parse[0] == "GM_END":
+        RUNNING = False
+    elif parse[0] == "PRNT":
+        print(parse[0],end="")
+    elif parse[0] == "IREP":
+        CLIENT.sendall((input(">> ")).encode())
+    elif parse[0] == "PRIREP":
+        print(parse[1],end="")
+        CLIENT.sendall((input(">>")).encode())
+    return
+def player_runtime():
+    while running:
+        text = CLIENT.recv(1024).decode()
+        interpret(text)
+
+    return
+
+
+def player():
+    print("Host IP: ",end="")
+    HOST = input()
+
+    valid_port = False
+    while valid_port == False:
+        try:
+            print("Host PORT: ",end="")
+            PORT = int(input())
+            valid_port = True
+        except:
+            print("Try again...")
+
+    CLIENT = socket.socket(socket.AF_NET, socket.SOCK_STREAM)
+    CLIENT.connect((HOST, PORT))
+
+    player_runtime()
+
+    client.close()
+
+    return
+
+#actual entry
+def _start():
+    choice = menu()
+    match choice:
+        case 1:
+            server()
+        case 2:
+            player()
+    runtime()
+
+_start()

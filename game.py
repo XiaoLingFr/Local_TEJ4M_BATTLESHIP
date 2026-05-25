@@ -13,7 +13,7 @@ def menu():
             print("Try again")
     return choice
 
-def server_main():
+def _start():
     choice = menu()
     match choice:
         case 1:
@@ -21,3 +21,4 @@ def server_main():
         case 2:
             player()
     runtime()
+
