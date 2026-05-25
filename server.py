@@ -12,6 +12,10 @@ conn = None
 addr = None
 SERVER = None
 
+HOST = None
+PORT = None
+CLIENT = None
+
 SIZE = 10
 SHIP = ["carrier", "battleship", "cruiser","submarine","destroyer"]
 SHIP_DATA = {
@@ -324,6 +328,12 @@ def server_runtime():
 
 def server():
     #setup server
+    global HOST
+    global PORT
+
+    global SERVER
+    global conn
+    global addr
 
     HOST = get_ip()
     PORT = 0
@@ -356,10 +366,6 @@ def server():
 
 #client part of the script
 
-HOST = None
-PORT = None
-CLIENT = None
-
 RUNNING = True
 
 def interpret(text):
@@ -383,9 +389,13 @@ def player_runtime():
 
 
 def player():
+    global HOST
+    global PORT
+
+    global CLIENT
+
     print("Host IP: ",end="")
     HOST = input()
-
     valid_port = False
     while valid_port == False:
         try:
