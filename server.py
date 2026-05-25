@@ -1,4 +1,15 @@
 import random
+import socket
+
+ZHAO_LANG_SYNTAX = {
+    "PRINT" = "PRNT",
+    "IMMEDIATE REPLAY" = "IREP",
+    "PRINT WITH REPLY" = "PRIREP"
+}
+
+conn = None
+addr = None
+SERVER = None
 
 GAME_END = "GM_END"
 SIZE = 10
@@ -92,6 +103,28 @@ server_guess = [
 ]
 
 #=====UTILITIES=====
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('8.8.8.8', 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = '127.0.0.1'
+    finally:
+        s.close()
+    return ip
+
+def send(text):
+    conn.sendall(text.encode())
+
+def recieve():
+    data = conn.recv(1024).decode()
+    return data
+
+def send_and_recieve():
+    conn.sendall(text.encode())
+    data = conn.recv(1024).decode()
+    return data
 
 def board_to_string(board):
     string = ""
@@ -163,8 +196,6 @@ def server_setup():
             orient = ORIENTATIONS[random.randint(0,1)]
 
             valid_placement = place_ship(row, col, SHIP[i],server_board,orient)
-            if valid_placement == False:
-                print("Try again")
     return
 
 #=====Game Stuff=====
@@ -227,8 +258,6 @@ def runtime():
             res = input_to_coordinate(reply)
             if res != None:
                 row, column = res
-                print(row)
-                print(column)
                 if(player_guess[row][column] != HIT and player_guess[row][column] != MISS):
                     if server_board[row][column] != UNKNOWN:
                         player_guess[row][column] = HIT
@@ -268,24 +297,34 @@ def runtime():
         print("You won! Reconnect to play again!")
     else:
         print("How?")
-        
-def menu():
-    valid_input == False
-    choice == 0
-    print("Welcome To Battleship\n1.Setup Server\n2. Setup as player")
-    while valid_input == False:
-        try:
-            choice = int(input(">> "))
-            if choice == 1 or choice == 2:
-               valid_input = True 
-        except:
-            print("Try again")
-    return choice
 
-def main():
-    choice = menu()
+def server():
+    #setup server
+
+    HOST = get_ip()
+    PORT = 0
+    valid_port = False
+    while valid_port == False:
+        try:
+            PORT = int(input("Port to listen from: "))
+        except:
+            print("Enter a valid port")
+
+    print("IP Address: " + HOST)
+    print("PORT: " + str(PORT))
+
+    #find client:
+    SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    SERVER.bind((HOST,PORT))
+    SERVER.listen(1)
+
+    print("Waiting for player to connect....")
+    conn,addr = SERVER.accept()
+    print("Connected to: " + addr)
 
     runtime()
 
-if __name__ == "__main__":
-    main()
+    conn.close()
+    SERVER.close()
+
+    return
