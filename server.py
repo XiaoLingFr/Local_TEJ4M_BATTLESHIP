@@ -2,9 +2,9 @@ import random
 import socket
 
 ZHAO_LANG_SYNTAX = {
-    "PRINT" : "PRNT",
-    "IMMEDIATE REPLY" : "IREP",
-    "PRINT WITH REPLY" : "PRIREP"
+    "PRINT": "PRNT",
+    "IMMEDIATE REPLY": "IREP",
+    "PRINT WITH REPLY": "PRIREP",
     "GAME END" : "GM_END"
 }
 
@@ -104,13 +104,13 @@ server_guess = [
 
 #=====UTILITIES=====
 def menu():
-    valid_input == False
-    choice == 0
-    print("Welcome To Battleship\n1.Setup Server\n2. Setup as player")
+    valid_input = False
+    choice = 0
+    print("Welcome To Battleship\n1.Setup Server\n2. Setup as player\n3.Exit")
     while valid_input == False:
         try:
             choice = int(input(">> "))
-            if choice == 1 or choice == 2:
+            if choice == 1 or choice == 2 or choice == 3:
                valid_input = True 
         except:
             print("Try again")
@@ -192,15 +192,15 @@ def player_setup():
                 send((board_to_string(player_board)))
                 send(("Setting up for: " + SHIP[i]))
                 
-                reply = send_and_recieve(("Co-ordinates (Letter, Row Number): ",end=""))
+                reply = send_and_recieve(("Co-ordinates (Letter, Row Number): "))
                 result = input_to_coordinate(reply)
                 if result != None:
                     row, column = result
-                    send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ", end="")
+                    send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ")
                     orientation = send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ", end="")
                     valid_placement = place_ship(row, column, SHIP[i], player_board, orientation)
             except IndexError:
-                send("Try again")
+                send("Try again\n")
     return
 
 def server_setup():
@@ -245,13 +245,13 @@ def check_sunk(board, state):
         if state[i] != shadow_state[i]:
             #update ship information
             state[i] = shadow_state[i]
-            send(SHIP[i] + " has sunk!")
+            send(SHIP[i] + " has sunk!\n")
     return
 
 def ship_remaining_to_string(ships):
     text = "Enemy Remaining: "
     for i in range(0,len(ship)):
-        if ships[i] = True:
+        if ships[i] == True:
             text = text + SHIP[i]
             text = text + " "
     return text
@@ -278,7 +278,7 @@ def server_runtime():
         #player's turn
         valid_move = False
         while valid_move == False:
-            reply = send_and_recieve("Where to hit?")
+            reply = send_and_recieve("Where to hit: ")
             res = input_to_coordinate(reply)
             if res != None:
                 row, column = res
@@ -296,7 +296,7 @@ def server_runtime():
                 else:
                     send("Try again")
             else:
-                send("Try inputting a valid co-ordinate")
+                send("Try inputting a valid co-ordinate\n")
         #check if a ship has been sunk
         check_sunk(server_board, server_ships)
 
@@ -316,11 +316,11 @@ def server_runtime():
         player_loss = check_loss(player_board)
     
     if player_loss == True:
-        send("You lost! Reconnect to try again.")
+        send("You lost! Reconnect to try again.\n")
     elif server_loss == True:
-        send("You won! Reconnect to play again!")
+        send("You won! Reconnect to play again!\n")
     else:
-        send("How?")
+        send("How?\n")
 
 def server():
     #setup server
@@ -411,4 +411,7 @@ def _start():
             server()
         case 2:
             player()
+        case 3:
+            return
+
 _start()
