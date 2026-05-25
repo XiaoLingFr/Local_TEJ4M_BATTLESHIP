@@ -4,8 +4,8 @@ import socket
 ZHAO_LANG_SYNTAX = {
     "PRINT": "PRNT",
     "IMMEDIATE REPLY": "IREP",
-    "PRINT WITH REPLY": "PRIREP",
-    "GAME END" : "GM_END"
+    "PRINT WITH REPLY": "PREP",
+    "GAME END" : "GEND",
 }
 
 conn = None
@@ -132,7 +132,7 @@ def get_ip():
     return ip
 
 def send(text):
-    conn.sendall((ZHAO_LANG_SYNTAX["PRINT"] +" "+ text).encode())
+    conn.sendall((ZHAO_LANG_SYNTAX["PRINT"] +" "+ text + "\n"+"|").encode())
 
 def recieve():
     conn.sendall(ZHAO_LANG_SYNTAX["IMMEDIATE REPLY"])
@@ -140,12 +140,13 @@ def recieve():
     return data
 
 def send_and_recieve(text):
-    conn.sendall((ZHAO_LANG_SYNTAX["PRINT WITH REPLY"] + " " + text).encode())
+    conn.sendall((ZHAO_LANG_SYNTAX["PRINT WITH REPLY"] + " " + text + "\n"+"|").encode())
     data = conn.recv(1024).decode()
     return data
 
 def end_signal():
-    conn.sendall(ZHAO_LANG_SYNTAX["END GAME"])
+    conn.sendall((ZHAO_LANG_SYNTAX["END GAME"] + "|").encode())
+    return
 
 def board_to_string(board):
     string = ""
@@ -190,18 +191,18 @@ def input_to_coordinate(text):
 
 def player_setup():
     for i in range(0, len(SHIP)):
+        print(("Setting up for: " + SHIP[i]))
         valid_placement = False
         while(valid_placement == False):
             try:
-                send((board_to_string(player_board)))
-                send(("Setting up for: " + SHIP[i]))
+                send((board_to_string(player_board) + "\n"))
+                send((("Setting up for: " + SHIP[i]) + "\n"))
                 
                 reply = send_and_recieve(("Co-ordinates (Letter, Row Number): "))
                 result = input_to_coordinate(reply)
                 if result != None:
                     row, column = result
-                    send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ")
-                    orientation = send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ", end="")
+                    orientation = send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ")
                     valid_placement = place_ship(row, column, SHIP[i], player_board, orientation)
             except IndexError:
                 send("Try again\n")
@@ -254,7 +255,7 @@ def check_sunk(board, state):
 
 def ship_remaining_to_string(ships):
     text = "Enemy Remaining: "
-    for i in range(0,len(ship)):
+    for i in range(0,len(ships)):
         if ships[i] == True:
             text = text + SHIP[i]
             text = text + " "
@@ -271,10 +272,14 @@ def server_runtime():
     player_setup()
     server_setup()
 
+    print("Server and Player has finished setting up!")
+
     player_loss = False
     server_loss = False
     
     while player_loss == False and server_loss == False:
+        print("Player's turn")
+        
         send(board_to_string(player_board) + "\n")
         send(board_to_string(player_guess) + "\n")
         send(ship_remaining_to_string(server_ships) + "\n")
@@ -306,8 +311,9 @@ def server_runtime():
 
         #check if player has won
         server_loss = check_loss(server_board)
-
+        
         if server_loss == False:
+            print("Server's turn!")
             row, col = servers_turn(server_guess)
             if player_board[row][column] != UNKNOWN:
                 server_guess[row][column] = HIT
@@ -369,21 +375,35 @@ def server():
 RUNNING = True
 
 def interpret(text):
-    parse = text.split(" ")
-    if parse[0] == "GM_END":
+    global RUNNING
+    parse = text.split(" ",1)
+    if parse[0] == ZHAO_LANG_SYNTAX["GAME END"]:
         RUNNING = False
-    elif parse[0] == "PRNT":
-        print(parse[0],end="")
-    elif parse[0] == "IREP":
-        CLIENT.sendall((input(">> ")).encode())
-    elif parse[0] == "PRIREP":
-        print(parse[1],end="")
-        CLIENT.sendall((input(">>")).encode())
+    elif parse[0] == ZHAO_LANG_SYNTAX["PRINT"]:
+        print(parse[1])
+    elif parse[0] == ZHAO_LANG_SYNTAX["IMMEDIATE REPLY"]:
+        response = input(">> ")
+        CLIENT.sendall(response.encode())
+    elif parse[0] == ZHAO_LANG_SYNTAX["PRINT WITH REPLY"]:
+        print(parse[1])
+        response = input(">> ")
+        CLIENT.sendall(response.encode())
+
     return
+
 def player_runtime():
+    global RUNNING
+    buffer = ""
+
     while RUNNING:
-        text = CLIENT.recv(1024).decode()
-        interpret(text)
+        data = CLIENT.recv(1024).decode()
+        if data:
+            buffer = buffer + data
+
+        while "|" in buffer:
+            instruction, buffer = buffer.split("|",1)
+            if instruction.strip():
+                result = interpret(instruction.strip())
 
     return
 
@@ -411,7 +431,7 @@ def player():
 
     player_runtime()
 
-    client.close()
+    CLIENT.close()
 
     return
 
