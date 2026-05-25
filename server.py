@@ -345,7 +345,7 @@ def server():
 
     print("Waiting for player to connect....")
     conn,addr = SERVER.accept()
-    print("Connected to: " + addr)
+    print("Connected to: ", addr)
 
     server_runtime()
 
@@ -375,7 +375,7 @@ def interpret(text):
         CLIENT.sendall((input(">>")).encode())
     return
 def player_runtime():
-    while running:
+    while RUNNING:
         text = CLIENT.recv(1024).decode()
         interpret(text)
 
