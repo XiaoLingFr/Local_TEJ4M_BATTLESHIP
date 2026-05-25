@@ -126,8 +126,8 @@ def place_ship(row, col, ship, board, orientation):
 
 def input_to_coordinate(text):
     try:
-        column = board_header_to_column[position[0]]
-        row = int(position[1])
+        column = board_header_to_column[text[0]]
+        row = int(text[1])
         return (row,column)
     except:
         return None
@@ -142,9 +142,10 @@ def player_setup():
                 print(board_to_string(player_board))
                 print("Setting up for: " + SHIP[i])
 
-                print("Co-ordinates (Letter, Row Number)",end="")
-                result = input_to_coordinate(input())
-                if result != None
+                print("Co-ordinates (Letter, Row Number): ",end="")
+                reply = input()
+                result = input_to_coordinate(reply)
+                if result != None:
                     row, column = result
                     print("Orientation [V (Vertical)/ H (Horizontal)]: ", end="")
                     orientation = input()
@@ -168,12 +169,37 @@ def server_setup():
 
 #=====Game Stuff=====
 def check_loss(board):
+    #while it is entirely possible to use the data, this is a lot more solid because its cooler lol
     loss = True
     for r in range(0,SIZE):
         for c in range(0,SIZE):
             if board[r][c] != HIT and board[r][c] != MISS and board[r][c] != UNKNOWN:
                 return False
     return True
+
+player_ships = [True, True, True, True, True]
+server_ships = [True, True, True, True, True]
+
+def check_sunk(board, state):
+    shadow_state = [False, False, False,False, False]
+    for r in range(0,SIZE):
+        for c in range(0,SIZE):
+            #first check if the board is a boat
+            if board[r][c] != UNKNOWN and board[r][c] != MISS and board[r][c] != HIT:
+                #check what boat it is
+                i = 0
+                while (i<5):
+                    if(SHIP_REPRESENTATION[SHIP[i]] == board[r][c]):
+                        break
+                    i = i + 1
+                shadow_state[i] = True
+    
+    for i in range(0,5):
+        if state[i] != shadow_state[i]:
+            #update ship information
+            state[i] = shadow_state[i]
+            print(SHIP[i] + " has sunk!")
+    return
 
 def servers_turn(board):
     row = 0
@@ -194,20 +220,30 @@ def runtime():
         valid_move = False
         while valid_move == False:
             print("Where to hit?")
-            res = input_to_coordinate(input())
+            reply = input()
+            res = input_to_coordinate(reply)
             if res != None:
-                if(player_guess[row][column] != HIT and player_guess[row][column]):
+                row, column = res
+                print(row)
+                print(column)
+                if(player_guess[row][column] != HIT and player_guess[row][column] != MISS):
                     if server_board[row][column] != UNKNOWN:
-                        player_guess[row][column] == HIT
-                        server_board[row][column] == HIT
+                        player_guess[row][column] = HIT
+                        server_board[row][column] = HIT
+                    elif server_board[row][column] == UNKNOWN:
+                        player_guess[row][column] = MISS
+                        server_board[row][column] = MISS
                     else:
-                        player_guess[row][column] == MISS
-                        server_board[row][column] == MISS
+                        player_guess[row][column] = "?"
+                        server_board[row][column] = "?"
                     valid_move = True
                 else:
                     print("Try again")
             else:
                 print("Try inputting a valid co-ordinate")
+        
+        #check if a ship has been sunk
+        check_sunk(server_board, server_ships)
 
         #check if player has won
         server_loss = check_loss(server_board)
@@ -215,15 +251,21 @@ def runtime():
         if server_loss == False:
             row, col = servers_turn(server_guess)
             if player_board[row][column] != UNKNOWN:
-                server_guess[row][column] == HIT
-                player_board[row][column] == HIT
+                server_guess[row][column] = HIT
+                player_board[row][column] = HIT
             else:
-                server_guess[row][column] == MISS
-                player_board[row][column] == MISS
+                server_guess[row][column] = MISS
+                player_board[row][column] = MISS
 
+        check_sunk(player_board, player_ships)
         player_loss = check_loss(player_board)
-
-
+    
+    if player_loss == True:
+        print("You lost! Reconnect to try again.")
+    elif server_loss == True:
+        print("You won! Reconnect to play again!")
+    else:
+        print("How?")
         
 
 def main():
