@@ -331,7 +331,7 @@ def server():
     while valid_port == False:
         try:
             PORT = int(input("Port to listen from: "))
-            valid_port == True
+            valid_port = True
         except:
             print("Enter a valid port")
 
