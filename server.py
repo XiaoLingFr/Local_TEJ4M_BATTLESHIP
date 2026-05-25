@@ -209,6 +209,9 @@ def servers_turn(board):
 
 #=====Runtime=====
 def runtime():
+    player_setup()
+    server_setup()
+
     player_loss = False
     server_loss = False
     
@@ -241,7 +244,6 @@ def runtime():
                     print("Try again")
             else:
                 print("Try inputting a valid co-ordinate")
-        
         #check if a ship has been sunk
         check_sunk(server_board, server_ships)
 
@@ -267,10 +269,21 @@ def runtime():
     else:
         print("How?")
         
+def menu():
+    valid_input == False
+    choice == 0
+    print("Welcome To Battleship\n1.Setup Server\n2. Setup as player")
+    while valid_input == False:
+        try:
+            choice = int(input(">> "))
+            if choice == 1 or choice == 2:
+               valid_input = True 
+        except:
+            print("Try again")
+    return choice
 
 def main():
-    player_setup()
-    server_setup()
+    choice = menu()
 
     runtime()
 
