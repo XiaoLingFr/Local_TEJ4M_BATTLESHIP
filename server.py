@@ -331,6 +331,7 @@ def server():
     while valid_port == False:
         try:
             PORT = int(input("Port to listen from: "))
+            valid_port == True
         except:
             print("Enter a valid port")
 
@@ -390,6 +391,7 @@ def player():
         try:
             print("Host PORT: ",end="")
             PORT = int(input())
+            print("\n",end="")
             valid_port = True
         except:
             print("Try again...")
