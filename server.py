@@ -402,6 +402,4 @@ def _start():
             server()
         case 2:
             player()
-    runtime()
-
 _start()
