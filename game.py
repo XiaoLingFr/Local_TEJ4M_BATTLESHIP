@@ -261,6 +261,8 @@ def ship_remaining_to_string(ships):
             text = text + " "
     return text
 
+#=====Algorithm=====
+
 def servers_turn(board):
     row = 0
     column = 0
@@ -280,8 +282,11 @@ def server_runtime():
     while player_loss == False and server_loss == False:
         print("Player's turn")
         
+        send("YOUR BOARD:\n")
         send(board_to_string(player_board) + "\n")
+        send("YOUR GUESSING BOARD:\n")
         send(board_to_string(player_guess) + "\n")
+        send("AI'S REMAINING SHIPS:\n")
         send(ship_remaining_to_string(server_ships) + "\n")
 
         #player's turn
@@ -312,15 +317,16 @@ def server_runtime():
         #check if player has won
         server_loss = check_loss(server_board)
         
+        #server's turn
         if server_loss == False:
             print("Server's turn!")
-            row, col = servers_turn(server_guess)
-            if player_board[row][column] != UNKNOWN:
-                server_guess[row][column] = HIT
-                player_board[row][column] = HIT
+            AI_row, AI_col = servers_turn(server_guess)
+            if player_board[AI_row][AI_col] != UNKNOWN:
+                server_guess[AI_row][AI_col] = HIT
+                player_board[AI_row][AI_col] = HIT
             else:
-                server_guess[row][column] = MISS
-                player_board[row][column] = MISS
+                server_guess[AI_row][AI_col] = MISS
+                player_board[AI_row][AI_col] = MISS
 
         check_sunk(player_board, player_ships)
         player_loss = check_loss(player_board)
