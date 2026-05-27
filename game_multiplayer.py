@@ -475,7 +475,7 @@ def player():
     return
 
 #actual entry
-def _start():
+def multiplayer():
     choice = menu()
     match choice:
         case 1:
@@ -485,4 +485,4 @@ def _start():
         case 3:
             return
 
-_start()
+multiplayer()

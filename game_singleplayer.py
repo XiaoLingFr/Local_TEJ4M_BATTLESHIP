@@ -266,33 +266,65 @@ def ship_remaining_to_string(ships):
 pre_AI_moves = [(1,1),(1,8),(8,1),(8,8)]
 
 SHIP_SIZE = [2,3,3,4,5]
+WEIGHT = 5
 
 def check_count(board, row, col, ship_size):
     count = 0
-    #vertical case
-    vertical = True
-    horizontal = True
+
+    #Down Case
+    down = True
+    right = True
+
+    up = True
+    left = True
+
+    #down case
     try:
         for i in range(0, ship_size):
             if(board[row+i][col] == MISS):
-                vertical = False
+                down = False
                 break
     except IndexError:
+        down = False
         pass 
 
-    #horizontal case:
+    #right case:
     try:
         for i in range(0, ship_size):
             if (board[row][col+i] == MISS):
-                horizontal = False
+                right = False
                 break
     except IndexError:
+        right = False
         pass
+    
+    #up case:
+    if row - ship_size + 1 < 0:
+        up = False
+    else:
+        for i in range(0, ship_size):
+            if (board[row-i][col] == MISS):
+                up = False
+                break
+    
+    #left case:
+    if col-ship_size + 1 < 0:
+        left = False
+    else:
+        for i in range(0, ship_size):
+            if (board[row][col-i] == MISS):
+                left = False
+                break
 
-    if horizontal == True:
+    if up == True:
         count = count + 1
-    if vertical == True:
+    if down == True:
         count = count + 1
+    if left == True:
+        count = count + 1
+    if right == True:
+        count = count + 1
+
     return count
 
 def probability_function(original, board):
@@ -317,16 +349,22 @@ def probability_function(original, board):
         for c in range(0,SIZE):
             if original[r][c] == HIT:
                 if (SIZE-1) and original[r+1][c] != MISS and original[r+1][c] != HIT :
-                    probability_density[r+1][c] = probability_density[r+1][c] + 50
+                    probability_density[r+1][c] = probability_density[r+1][c] + WEIGHT
 
                 if c<(SIZE-1) and original[r][c+1] != MISS and original[r][c+1] != HIT:
-                    probability_density[r][c+1] = probability_density[r][c+1] + 50
+                    probability_density[r][c+1] = probability_density[r][c+1] + WEIGHT
 
                 if r > 0 and original[r-1][c] != MISS and original[r-1][c] != HIT:
-                    probability_density[r-1][c] = probability_density[r-1][c] + 50
+                    probability_density[r-1][c] = probability_density[r-1][c] + WEIGHT
                 
                 if c > 0 and original[r][c-1] != MISS and original[r][c-1] != HIT:
-                    probability_density[r][c-1] = probability_density[r][c-1] + 50
+                    probability_density[r][c-1] = probability_density[r][c-1] + WEIGHT
+    
+    #if we dont overwrite the hit with 0s, the AI will never move onto the next valid move
+    for r in range(0,SIZE):
+        for c in range(0,SIZE):
+            if original[r][c] == HIT:
+                probability_density[r][c] = 0
     
     for i in range(0,SIZE):
         print(probability_density[i])
@@ -334,7 +372,7 @@ def probability_function(original, board):
     return probability_density
 
 def servers_turn(board, move_no):
-    if move_no < len(pre_AI_moves):
+    if move_no <= len(pre_AI_moves):
         return pre_AI_moves[(move_no - 1)]
     else:
         probability_density = probability_function(board,copy.deepcopy(board))
@@ -527,7 +565,7 @@ def player():
     return
 
 #actual entry
-def _start():
+def singleplayer():
     choice = menu()
     match choice:
         case 1:
@@ -537,4 +575,4 @@ def _start():
         case 3:
             return
 
-_start()
+singleplayer()
