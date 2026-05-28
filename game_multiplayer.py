@@ -1,6 +1,7 @@
 import random
 import socket
 import copy
+import time
 
 ZHAO_LANG_SYNTAX = {
     "PRINT": "PRNT",
@@ -106,6 +107,9 @@ server_guess = [
     ['~','~','~','~','~','~','~','~','~','~'],
     ['~','~','~','~','~','~','~','~','~','~']
 ]
+
+player_board_copy = []
+server_board_copy = []
 
 #=====UTILITIES=====
 def menu():
@@ -314,11 +318,16 @@ def server_runtime():
     player_setup()
     server_setup()
 
+    #this is just used to keep track of old player boards. However, it probably wont be used much
+    player_board_copy = copy.deepcopy(player_board)
+    server_board_copy = copy.deepcopy(server_board)
+
     print("Server and Player has finished setting up!")
 
     player_loss = False
     server_loss = False
     
+    #the game happens here
     while player_loss == False and server_loss == False:
         print("Player's turn")
         
@@ -372,6 +381,27 @@ def server_runtime():
         print("You lost! Start up the program to play again!")
     else:
         send("How?\n")
+    
+    time.sleep(3)
+
+    #this is logic for finalization of the game for the server side
+
+    print("Client's Ships: ")
+    print(board_to_string(player_board_copy))
+    print("\n")
+
+    print("Your Ships: ")
+    print(board_to_string(server_board_copy))
+    print("\n")
+
+    send("Host's Ships: \n")
+    send((board_to_string(server_board_copy) + "\n"))
+    send("Your Ships: \n")
+    send((board_to_string(server_board_copy) + "\n"))
+    
+    end_signal()
+
+    return
 
 def server():
     #setup server
