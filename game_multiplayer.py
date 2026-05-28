@@ -280,11 +280,16 @@ def ship_remaining_to_string(ships):
             text = text + " "
     return text
 
+#while this was for the original AI
+#I decided to keep it anyways
+#because there is a huge chance that a vulnerability was caught because we put the host in their own little sandbox using functions
 def servers_turn():
     print("YOUR BOARD:")
     print(board_to_string(server_board))
+    print("")
     print("YOUR GUESSING BOARD:")
     print(board_to_string(server_guess))
+    print("")
     print("CLIENT'S REMAINING SHIPS:")
     print(ship_remaining_to_string(player_ships))
 
@@ -330,11 +335,12 @@ def server_runtime():
     #the game happens here
     while player_loss == False and server_loss == False:
         print("Player's turn")
-        
         send("YOUR BOARD:\n")
         send(board_to_string(player_board) + "\n")
+        send("\n")
         send("YOUR GUESSING BOARD:\n")
         send(board_to_string(player_guess) + "\n")
+        send("\n")
         send("HOST'S REMAINING SHIPS:\n")
         send(ship_remaining_to_string(server_ships) + "\n")
 
@@ -360,9 +366,10 @@ def server_runtime():
                     send("Try again")
             else:
                 send("Try inputting a valid co-ordinate\n")
-        #check if a ship has been sunk
-        check_sunk(server_board, server_ships)
+        send("===============================\n")
 
+        #check if any of host's ships has been sunk
+        check_sunk(server_board, server_ships)
         #check if player has won
         server_loss = check_loss(server_board)
         
@@ -370,6 +377,7 @@ def server_runtime():
         if server_loss == False:
             servers_turn()
 
+        print("==============================")
         check_sunk(player_board, player_ships)
         player_loss = check_loss(player_board)
     
