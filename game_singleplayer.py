@@ -359,7 +359,7 @@ def probability_function(original, board):
     for r in range(0,SIZE):
         for c in range(0,SIZE):
             if original[r][c] == HIT:
-                if (SIZE-1) and original[r+1][c] != MISS and original[r+1][c] != HIT :
+                if r<(SIZE-1) and original[r+1][c] != MISS and original[r+1][c] != HIT :
                     probability_density[r+1][c] = probability_density[r+1][c] + WEIGHT
 
                 if c<(SIZE-1) and original[r][c+1] != MISS and original[r][c+1] != HIT:
