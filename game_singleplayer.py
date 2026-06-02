@@ -1,6 +1,7 @@
 import random
 import socket
 import copy
+import time
 
 ZHAO_LANG_SYNTAX = {
     "PRINT": "PRNT",
@@ -107,6 +108,9 @@ server_guess = [
     ['~','~','~','~','~','~','~','~','~','~']
 ]
 
+player_board_copy = []
+server_board_copy = []
+
 #=====UTILITIES=====
 def menu():
     valid_input = False
@@ -146,7 +150,7 @@ def send_and_recieve(text):
     return data
 
 def end_signal():
-    conn.sendall((ZHAO_LANG_SYNTAX["END GAME"] + "|").encode())
+    conn.sendall((ZHAO_LANG_SYNTAX["GAME END"] + "|").encode())
     return
 
 def board_to_string(board):
@@ -192,7 +196,6 @@ def input_to_coordinate(text):
 
 def player_setup():
     for i in range(0, len(SHIP)):
-        print(("Setting up for: " + SHIP[i]))
         valid_placement = False
         while(valid_placement == False):
             try:
@@ -201,7 +204,7 @@ def player_setup():
                 
                 reply = send_and_recieve(("Co-ordinates (Letter, Row Number): "))
                 result = input_to_coordinate(reply)
-                if result != None:
+                if result != None and result != "":
                     row, column = result
                     orientation = send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ")
                     valid_placement = place_ship(row, column, SHIP[i], player_board, orientation)
@@ -249,9 +252,17 @@ def check_sunk(board, state):
     
     for i in range(0,5):
         if state[i] != shadow_state[i]:
-            #update ship information
+            #update state information
             state[i] = shadow_state[i]
-            send(SHIP[i] + " has sunk!\n")
+            if state is player_ships:
+                send(("Message: Client's " + SHIP[i] + " has sunk!\n"))
+                print("Message: Client's " + SHIP[i]+ " has sunk!\n")
+            elif state is server_ships:
+                send(("Message: Host's " + SHIP[i] + " has sunk!\n"))
+                print("Message: Host's " + SHIP[i]+ " has sunk!\n")
+            else:
+                send(("Message: " + SHIP[i] + " has sunk!\n"))
+                print("Message: " + SHIP[i]+ " has sunk!\n")
     return
 
 def ship_remaining_to_string(ships):
@@ -262,7 +273,7 @@ def ship_remaining_to_string(ships):
             text = text + " "
     return text
 
-#=====Algorithm=====
+#=====Algorithm====
 pre_AI_moves = [(1,1),(1,8),(8,1),(8,8)]
 
 SHIP_SIZE = [2,3,3,4,5]
@@ -396,21 +407,23 @@ def server_runtime():
     player_setup()
     server_setup()
 
+    #this is just used to keep track of old player boards. However, it probably wont be used much
+    player_board_copy = copy.deepcopy(player_board)
+    server_board_copy = copy.deepcopy(server_board)
+
     print("Server and Player has finished setting up!")
 
     player_loss = False
     server_loss = False
     
+    #the game happens here
     while player_loss == False and server_loss == False:
         print("Player's turn")
-        
         send("YOUR BOARD:\n")
         send(board_to_string(player_board) + "\n")
-        send("\n")
         send("YOUR GUESSING BOARD:\n")
         send(board_to_string(player_guess) + "\n")
-        send("\n")
-        send("AI'S REMAINING SHIPS:\n")
+        send("HOST'S REMAINING SHIPS:\n")
         send(ship_remaining_to_string(server_ships) + "\n")
 
         #player's turn
@@ -418,25 +431,29 @@ def server_runtime():
         while valid_move == False:
             reply = send_and_recieve("Where to hit: ")
             res = input_to_coordinate(reply)
-            if res != None:
+            try:
                 row, column = res
-                if(player_guess[row][column] != HIT and player_guess[row][column] != MISS):
-                    if server_board[row][column] != UNKNOWN:
-                        player_guess[row][column] = HIT
-                        server_board[row][column] = HIT
-                    elif server_board[row][column] == UNKNOWN:
-                        player_guess[row][column] = MISS
-                        server_board[row][column] = MISS
+                if res != None and res != "":
+                    if(player_guess[row][column] != HIT and player_guess[row][column] != MISS):
+                        if server_board[row][column] != UNKNOWN:
+                            player_guess[row][column] = HIT
+                            server_board[row][column] = HIT
+                        elif server_board[row][column] == UNKNOWN:
+                            player_guess[row][column] = MISS
+                            server_board[row][column] = MISS
+                        else:
+                            player_guess[row][column] = "?"
+                            server_board[row][column] = "?"
+                        valid_move = True
                     else:
-                        player_guess[row][column] = "?"
-                        server_board[row][column] = "?"
-                    valid_move = True
+                        send("Try again")
                 else:
-                    send("Try again")
-            else:
-                send("Try inputting a valid co-ordinate\n")
+                    send("Try inputting a valid co-ordinate\n")
+            except:
+                send("Try Again.\n")
         send("===============================\n")
-        #check if a ship has been sunk
+
+        #check if any of host's ships has been sunk
         check_sunk(server_board, server_ships)
         #check if player has won
         server_loss = check_loss(server_board)
@@ -453,15 +470,37 @@ def server_runtime():
                 server_guess[AI_row][AI_col] = MISS
                 player_board[AI_row][AI_col] = MISS
 
+        print("==============================\n")
         check_sunk(player_board, player_ships)
         player_loss = check_loss(player_board)
     
     if player_loss == True:
         send("You lost! Reconnect to try again.\n")
+        print("You won! Start up the program to play again!")
     elif server_loss == True:
         send("You won! Reconnect to play again!\n")
+        print("You lost! Start up the program to play again!")
     else:
         send("How?\n")
+    
+    time.sleep(3)
+
+    #this is logic for finalization of the game for the server side
+
+    print("Client's Ships: ")
+    print(board_to_string(player_board_copy))
+
+    print("Your Ships: ")
+    print(board_to_string(server_board_copy))
+
+    send("Host's Ships: \n")
+    send((board_to_string(server_board_copy) + "\n"))
+    send("Your Ships: \n")
+    send((board_to_string(server_board_copy) + "\n"))
+    
+    end_signal()
+
+    return
 
 def server():
     #setup server
@@ -511,8 +550,10 @@ def interpret(text):
     valid_input = False
     if parse[0] == ZHAO_LANG_SYNTAX["GAME END"]:
         RUNNING = False
+    
     elif parse[0] == ZHAO_LANG_SYNTAX["PRINT"]:
         print(parse[1])
+
     elif parse[0] == ZHAO_LANG_SYNTAX["IMMEDIATE REPLY"]:
         while valid_input == False:
             response = input(">> ")
@@ -521,6 +562,7 @@ def interpret(text):
                 CLIENT.sendall(response.encode())
             else:
                 print("Please enter a valid input.")
+    
     elif parse[0] == ZHAO_LANG_SYNTAX["PRINT WITH REPLY"]:
         print(parse[1])
         while valid_input == False:
@@ -546,9 +588,7 @@ def player_runtime():
             instruction, buffer = buffer.split("|",1)
             if instruction.strip():
                 result = interpret(instruction.strip())
-
     return
-
 
 def player():
     global HOST
@@ -578,7 +618,7 @@ def player():
     return
 
 #actual entry
-def singleplayer():
+def multiplayer():
     choice = menu()
     match choice:
         case 1:
@@ -588,4 +628,4 @@ def singleplayer():
         case 3:
             return
 
-singleplayer()
+multiplayer()

@@ -1,10 +1,15 @@
-import copy
+def server_setup():
+    for i in range(0, len(SHIP)):
+        valid_placement = False
+        while(valid_placement == False):
+            row = random.randint(0,9)
+            col = random.randint(0,9)
+            orient = ORIENTATIONS[random.randint(0,1)]
 
-MISS = 'O'
-HIT = 'X'
-UNKNOWN = '~'
+            valid_placement = place_ship(row, col, SHIP[i],server_board,orient)
+    return
 
-SIZE = 10
+#=====Algorithm=====
 pre_AI_moves = [(1,1),(1,8),(8,1),(8,8)]
 
 SHIP_SIZE = [2,3,3,4,5]
@@ -130,24 +135,3 @@ def servers_turn(board, move_no):
                     best_col = c
                     best_value = probability_density[best_row][best_col]
         return (best_row,best_col)
-
-server_guess = server_guess = [
-    ['~','~','~','~','~','~','~','~','~','~'],
-    ['~','X','X','X','X','~','~','~','O','~'],
-    ['~','~','~','~','O','~','~','~','~','~'],
-    ['~','~','~','~','~','~','~','~','~','~'],
-    ['~','~','~','~','~','~','~','~','~','~'],
-    ['~','~','~','~','~','~','~','~','~','~'],
-    ['~','~','~','~','~','~','~','~','~','~'],
-    ['~','~','~','~','~','~','~','X','~','~'],
-    ['~','O','~','~','~','~','~','~','O','~'],
-    ['~','~','~','~','~','~','~','~','~','~']
-]
-
-row, col = servers_turn(server_guess, 10)
-
-for i in range(0,SIZE):
-    print(server_guess[i])
-
-print (row)
-print (col)
