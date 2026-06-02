@@ -150,7 +150,7 @@ def send_and_recieve(text):
     return data
 
 def end_signal():
-    conn.sendall((ZHAO_LANG_SYNTAX["END GAME"] + "|").encode())
+    conn.sendall((ZHAO_LANG_SYNTAX["GAME END"] + "|").encode())
     return
 
 def board_to_string(board):
@@ -297,23 +297,26 @@ def servers_turn():
     while valid_move == False:
         reply = print("Where to hit: ")
         res = input_to_coordinate(input(">> "))
-        if res != None:
-            row, column = res
-            if(server_guess[row][column] != HIT and server_guess[row][column] != MISS):
-                if player_board[row][column] != UNKNOWN:
-                    server_guess[row][column] = HIT
-                    player_board[row][column] = HIT
-                elif player_board[row][column] == UNKNOWN:
-                    server_guess[row][column] = MISS
-                    player_board[row][column] = MISS
+        try:
+            if res != None:
+                row, column = res #this might cause an exception if the user enters and incomplete input
+                if(server_guess[row][column] != HIT and server_guess[row][column] != MISS):
+                    if player_board[row][column] != UNKNOWN:
+                        server_guess[row][column] = HIT
+                        player_board[row][column] = HIT
+                    elif player_board[row][column] == UNKNOWN:
+                        server_guess[row][column] = MISS
+                        player_board[row][column] = MISS
+                    else:
+                        server_guess[row][column] = "?"
+                        player_board[row][column] = "?"
+                    valid_move = True
                 else:
-                    server_guess[row][column] = "?"
-                    player_board[row][column] = "?"
-                valid_move = True
+                    print("Try again")
             else:
-                print("Try again")
-        else:
-            print("Try inputting a valid co-ordinate\n")
+                print("Try inputting a valid co-ordinate\n")
+        except:
+            print("Try again.")
     return
 
 #=====Runtimes=====
@@ -337,10 +340,8 @@ def server_runtime():
         print("Player's turn")
         send("YOUR BOARD:\n")
         send(board_to_string(player_board) + "\n")
-        send("\n")
         send("YOUR GUESSING BOARD:\n")
         send(board_to_string(player_guess) + "\n")
-        send("\n")
         send("HOST'S REMAINING SHIPS:\n")
         send(ship_remaining_to_string(server_ships) + "\n")
 
@@ -349,23 +350,26 @@ def server_runtime():
         while valid_move == False:
             reply = send_and_recieve("Where to hit: ")
             res = input_to_coordinate(reply)
-            row, column = res
-            if res != None and res != "" and row != None, column != None:
-                if(player_guess[row][column] != HIT and player_guess[row][column] != MISS):
-                    if server_board[row][column] != UNKNOWN:
-                        player_guess[row][column] = HIT
-                        server_board[row][column] = HIT
-                    elif server_board[row][column] == UNKNOWN:
-                        player_guess[row][column] = MISS
-                        server_board[row][column] = MISS
+            try:
+                row, column = res
+                if res != None and res != "":
+                    if(player_guess[row][column] != HIT and player_guess[row][column] != MISS):
+                        if server_board[row][column] != UNKNOWN:
+                            player_guess[row][column] = HIT
+                            server_board[row][column] = HIT
+                        elif server_board[row][column] == UNKNOWN:
+                            player_guess[row][column] = MISS
+                            server_board[row][column] = MISS
+                        else:
+                            player_guess[row][column] = "?"
+                            server_board[row][column] = "?"
+                        valid_move = True
                     else:
-                        player_guess[row][column] = "?"
-                        server_board[row][column] = "?"
-                    valid_move = True
+                        send("Try again")
                 else:
-                    send("Try again")
-            else:
-                send("Try inputting a valid co-ordinate\n")
+                    send("Try inputting a valid co-ordinate\n")
+            except:
+                send("Try Again.\n")
         send("===============================\n")
 
         #check if any of host's ships has been sunk
@@ -377,7 +381,7 @@ def server_runtime():
         if server_loss == False:
             servers_turn()
 
-        print("==============================")
+        print("==============================\n")
         check_sunk(player_board, player_ships)
         player_loss = check_loss(player_board)
     
@@ -396,11 +400,9 @@ def server_runtime():
 
     print("Client's Ships: ")
     print(board_to_string(player_board_copy))
-    print("\n")
 
     print("Your Ships: ")
     print(board_to_string(server_board_copy))
-    print("\n")
 
     send("Host's Ships: \n")
     send((board_to_string(server_board_copy) + "\n"))
@@ -459,8 +461,10 @@ def interpret(text):
     valid_input = False
     if parse[0] == ZHAO_LANG_SYNTAX["GAME END"]:
         RUNNING = False
+    
     elif parse[0] == ZHAO_LANG_SYNTAX["PRINT"]:
         print(parse[1])
+
     elif parse[0] == ZHAO_LANG_SYNTAX["IMMEDIATE REPLY"]:
         while valid_input == False:
             response = input(">> ")
@@ -469,6 +473,7 @@ def interpret(text):
                 CLIENT.sendall(response.encode())
             else:
                 print("Please enter a valid input.")
+    
     elif parse[0] == ZHAO_LANG_SYNTAX["PRINT WITH REPLY"]:
         print(parse[1])
         while valid_input == False:
