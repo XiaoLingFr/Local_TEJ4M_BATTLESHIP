@@ -204,7 +204,7 @@ def player_setup():
                 
                 reply = send_and_recieve(("Co-ordinates (Letter, Row Number): "))
                 result = input_to_coordinate(reply)
-                if result != None:
+                if result != None and result != "":
                     row, column = result
                     orientation = send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ")
                     valid_placement = place_ship(row, column, SHIP[i], player_board, orientation)
@@ -349,8 +349,8 @@ def server_runtime():
         while valid_move == False:
             reply = send_and_recieve("Where to hit: ")
             res = input_to_coordinate(reply)
-            if res != None:
-                row, column = res
+            row, column = res
+            if res != None and res != "" and row != None, column != None:
                 if(player_guess[row][column] != HIT and player_guess[row][column] != MISS):
                     if server_board[row][column] != UNKNOWN:
                         player_guess[row][column] = HIT
@@ -456,17 +456,28 @@ RUNNING = True
 def interpret(text):
     global RUNNING
     parse = text.split(" ",1)
+    valid_input = False
     if parse[0] == ZHAO_LANG_SYNTAX["GAME END"]:
         RUNNING = False
     elif parse[0] == ZHAO_LANG_SYNTAX["PRINT"]:
         print(parse[1])
     elif parse[0] == ZHAO_LANG_SYNTAX["IMMEDIATE REPLY"]:
-        response = input(">> ")
-        CLIENT.sendall(response.encode())
+        while valid_input == False:
+            response = input(">> ")
+            if len(response) > 0:
+                valid_input = True
+                CLIENT.sendall(response.encode())
+            else:
+                print("Please enter a valid input.")
     elif parse[0] == ZHAO_LANG_SYNTAX["PRINT WITH REPLY"]:
         print(parse[1])
-        response = input(">> ")
-        CLIENT.sendall(response.encode())
+        while valid_input == False:
+            response = input(">> ")
+            if len(response) > 0:
+                valid_input = True
+                CLIENT.sendall(response.encode())
+            else:
+                print("Try inputing a valid input")
 
     return
 
