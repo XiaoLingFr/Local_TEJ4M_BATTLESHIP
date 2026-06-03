@@ -256,13 +256,13 @@ def check_sunk(board, state):
             state[i] = shadow_state[i]
             if state is player_ships:
                 send(("Message: Client's " + SHIP[i] + " has sunk!\n"))
-                print("Message: Client's " + SHIP[i]+ " has sunk!\n")
+                print("Message: Client's " + SHIP[i]+ " has sunk!")
             elif state is server_ships:
                 send(("Message: Host's " + SHIP[i] + " has sunk!\n"))
-                print("Message: Host's " + SHIP[i]+ " has sunk!\n")
+                print("Message: Host's " + SHIP[i]+ " has sunk!")
             else:
                 send(("Message: " + SHIP[i] + " has sunk!\n"))
-                print("Message: " + SHIP[i]+ " has sunk!\n")
+                print("Message: " + SHIP[i]+ " has sunk!")
     return
 
 def ship_remaining_to_string(ships):
@@ -376,9 +376,6 @@ def probability_function(original, board):
         for c in range(0,SIZE):
             if original[r][c] == HIT:
                 probability_density[r][c] = 0
-    
-    for i in range(0,SIZE):
-        print(probability_density[i])
 
     return probability_density
 
@@ -411,14 +408,11 @@ def server_runtime():
     player_board_copy = copy.deepcopy(player_board)
     server_board_copy = copy.deepcopy(server_board)
 
-    print("Server and Player has finished setting up!")
-
     player_loss = False
     server_loss = False
     
     #the game happens here
     while player_loss == False and server_loss == False:
-        print("Player's turn")
         send("YOUR BOARD:\n")
         send(board_to_string(player_board) + "\n")
         send("YOUR GUESSING BOARD:\n")
@@ -470,7 +464,7 @@ def server_runtime():
                 server_guess[AI_row][AI_col] = MISS
                 player_board[AI_row][AI_col] = MISS
 
-        print("==============================\n")
+        print("==============================")
         check_sunk(player_board, player_ships)
         player_loss = check_loss(player_board)
     

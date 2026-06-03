@@ -332,14 +332,11 @@ def server_runtime():
     player_board_copy = copy.deepcopy(player_board)
     server_board_copy = copy.deepcopy(server_board)
 
-    print("Server and Player has finished setting up!")
-
     player_loss = False
     server_loss = False
     
     #the game happens here
     while player_loss == False and server_loss == False:
-        print("Player's turn")
         send("YOUR BOARD:\n")
         send(board_to_string(player_board) + "\n")
         send("YOUR GUESSING BOARD:\n")
