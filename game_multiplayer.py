@@ -122,7 +122,7 @@ def menu():
             if choice == 1 or choice == 2 or choice == 3:
                valid_input = True 
         except:
-            print("Try again")
+            print("Please enter a valid input")
     return choice
 
 def get_ip():
@@ -209,7 +209,9 @@ def player_setup():
                     orientation = send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ")
                     valid_placement = place_ship(row, column, SHIP[i], player_board, orientation)
             except IndexError:
-                send("Try again\n")
+                send("Please enter a valid placement.\n")
+            if valid_placement == False:
+                send("Your current placment overlaps other ship(s), try again.\n")
     return
 
 def server_setup():
@@ -227,7 +229,9 @@ def server_setup():
                     orientation = input("Orientation [V (Vertical)/ H (Horizontal)]: ")
                     valid_placement = place_ship(row, column, SHIP[i], server_board, orientation)
             except IndexError:
-                send("Try again\n")
+                print("Please enter a valid placement.")
+            if valid_placement == False:
+                print("Your current placement overlaps other ship(s), try again.")
     return
 
 #=====Game Stuff=====
@@ -263,13 +267,13 @@ def check_sunk(board, state):
             state[i] = shadow_state[i]
             if state is player_ships:
                 send(("Message: Client's " + SHIP[i] + " has sunk!\n"))
-                print("Message: Client's " + SHIP[i]+ " has sunk!\n")
+                print("Message: Client's " + SHIP[i]+ " has sunk!")
             elif state is server_ships:
                 send(("Message: Host's " + SHIP[i] + " has sunk!\n"))
-                print("Message: Host's " + SHIP[i]+ " has sunk!\n")
+                print("Message: Host's " + SHIP[i]+ " has sunk!")
             else:
                 send(("Message: " + SHIP[i] + " has sunk!\n"))
-                print("Message: " + SHIP[i]+ " has sunk!\n")
+                print("Message: " + SHIP[i]+ " has sunk!")
     return
 
 def ship_remaining_to_string(ships):
@@ -286,10 +290,8 @@ def ship_remaining_to_string(ships):
 def servers_turn():
     print("YOUR BOARD:")
     print(board_to_string(server_board))
-    print("")
     print("YOUR GUESSING BOARD:")
     print(board_to_string(server_guess))
-    print("")
     print("CLIENT'S REMAINING SHIPS:")
     print(ship_remaining_to_string(player_ships))
 
@@ -312,11 +314,11 @@ def servers_turn():
                         player_board[row][column] = "?"
                     valid_move = True
                 else:
-                    print("Try again")
+                    print("Try choosing a different co-ordinate")
             else:
-                print("Try inputting a valid co-ordinate\n")
+                print("Try inputting a valid co-ordinate.")
         except:
-            print("Try again.")
+            print("Please enter an input with 2 characters.")
     return
 
 #=====Runtimes=====
@@ -365,11 +367,11 @@ def server_runtime():
                             server_board[row][column] = "?"
                         valid_move = True
                     else:
-                        send("Try again")
+                        send("Please enter a different co-ordinate.\n")
                 else:
                     send("Try inputting a valid co-ordinate\n")
             except:
-                send("Try Again.\n")
+                send("Please enter a 2 character input.\n")
         send("===============================\n")
 
         #check if any of host's ships has been sunk
@@ -381,7 +383,7 @@ def server_runtime():
         if server_loss == False:
             servers_turn()
 
-        print("==============================\n")
+        print("==============================")
         check_sunk(player_board, player_ships)
         player_loss = check_loss(player_board)
     

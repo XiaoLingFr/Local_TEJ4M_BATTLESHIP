@@ -122,7 +122,7 @@ def menu():
             if choice == 1 or choice == 2 or choice == 3:
                valid_input = True 
         except:
-            print("Try again")
+            print("Please enter a correct co-ordinate")
     return choice
 
 def get_ip():
@@ -209,7 +209,7 @@ def player_setup():
                     orientation = send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ")
                     valid_placement = place_ship(row, column, SHIP[i], player_board, orientation)
             except IndexError:
-                send("Try again\n")
+                send("Please enter a valid placement.\n")
     return
 
 def server_setup():
@@ -446,11 +446,11 @@ def server_runtime():
                             server_board[row][column] = "?"
                         valid_move = True
                     else:
-                        send("Try again")
+                        send("Try choosing a different co-ordinate")
                 else:
                     send("Try inputting a valid co-ordinate\n")
             except:
-                send("Try Again.\n")
+                send("Please enter a full input.\n")
         send("===============================\n")
 
         #check if any of host's ships has been sunk
