@@ -194,22 +194,46 @@ def input_to_coordinate(text):
 
 #=====SETUP=====
 
-def player_setup():
+def random_setup(board):
     for i in range(0, len(SHIP)):
         valid_placement = False
         while(valid_placement == False):
-            try:
-                send((board_to_string(player_board) + "\n"))
-                send((("Setting up for: " + SHIP[i]) + "\n"))
-                
-                reply = send_and_recieve(("Co-ordinates (Letter, Row Number): "))
-                result = input_to_coordinate(reply)
-                if result != None and result != "":
-                    row, column = result
-                    orientation = send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ")
-                    valid_placement = place_ship(row, column, SHIP[i], player_board, orientation)
-            except IndexError:
-                send("Please enter a valid placement.\n")
+            row = random.randint(0,9)
+            col = random.randint(0,9)
+            orient = ORIENTATIONS[random.randint(0,1)]
+
+            valid_placement = place_ship(row, col, SHIP[i],board,orient)
+    return
+
+def player_setup():
+    choice = 0
+    valid_input = False
+    while valid_input == False:
+        try:
+            choice = int((send_and_recieve("Would you like a randomized setup? [1: Yes 2: No]"))[0])
+            if choice == 1 or choice == 2:
+                valid_input = True
+        except:
+            send("Your input is invalid, try again.\n")
+
+    if choice == 1:
+        random_setup(player_board)
+    else:
+        for i in range(0, len(SHIP)):
+            valid_placement = False
+            while(valid_placement == False):
+                try:
+                    send((board_to_string(player_board) + "\n"))
+                    send((("Setting up for: " + SHIP[i]) + "\n"))
+                    
+                    reply = send_and_recieve(("Co-ordinates (Letter, Row Number): "))
+                    result = input_to_coordinate(reply)
+                    if result != None and result != "":
+                        row, column = result
+                        orientation = send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ")
+                        valid_placement = place_ship(row, column, SHIP[i], player_board, orientation)
+                except IndexError:
+                    send("Please enter a valid placement.\n")
     return
 
 def server_setup():
