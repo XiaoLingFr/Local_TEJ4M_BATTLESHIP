@@ -10,4 +10,5 @@ For running a mulitplayer game:
 
 For singleplayer game AI:
 
-If you wish to test out the AI or make any modifications, please first test it within AI_Prototype. Or you can test, implement and then download the source files again XD
+If you wish to test out the AI or make any modifications, please first test it within AI.py. 
+Or you can test, implement and then download the source files again XD
