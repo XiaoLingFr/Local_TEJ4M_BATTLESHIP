@@ -471,7 +471,7 @@ def interpret(text):
                 valid_input = True
                 CLIENT.sendall(response.encode())
             else:
-                print("Please enter a valid input.")
+                print("You entered without typing. Try again.")
     
     elif parse[0] == ZHAO_LANG_SYNTAX["PRINT WITH REPLY"]:
         print(parse[1])
@@ -481,7 +481,7 @@ def interpret(text):
                 valid_input = True
                 CLIENT.sendall(response.encode())
             else:
-                print("Try inputing a valid input")
+                print("You entered without typing. Try again.")
 
     return
 
