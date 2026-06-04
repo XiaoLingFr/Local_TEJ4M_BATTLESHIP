@@ -363,8 +363,8 @@ def servers_turn():
 
     valid_move = False
     while valid_move == False:
-        reply = print("Where to hit: ")
-        res = input_to_coordinate(input(">> "))
+        reply = input("Where to hit: \n>>")
+        res = input_to_coordinate(reply)
         try:
             if res != None:
                 row, column = res #this might cause an exception if the user enters and incomplete input
@@ -372,9 +372,13 @@ def servers_turn():
                     if player_board[row][column] != UNKNOWN:
                         server_guess[row][column] = HIT
                         player_board[row][column] = HIT
+                        send(("Message: Host has hit a client ship [" + reply[0] + reply[1] + "]\n"))
+                        print(("Message: You have hit a ship! [" + reply[0] + reply[1] + "]"))
                     elif player_board[row][column] == UNKNOWN:
                         server_guess[row][column] = MISS
                         player_board[row][column] = MISS
+                        send("Message: Host has missed! [" + reply[0] + reply[1] + "]\n")
+                        print("Message: You missed![" + reply[0] + reply[1] + "]")
                     else:
                         server_guess[row][column] = "?"
                         player_board[row][column] = "?"
@@ -390,6 +394,7 @@ def servers_turn():
 #=====Runtimes=====
 #main server runtime
 def server_runtime():
+    RUNNING = True
     computer_turn_count = 0
     
     player_setup()
@@ -403,79 +408,100 @@ def server_runtime():
     server_loss = False
     
     #the game happens here
-    while player_loss == False and server_loss == False:
-        send("YOUR BOARD:\n")
-        send(board_to_string(player_board) + "\n")
-        send("YOUR GUESSING BOARD:\n")
-        send(board_to_string(player_guess) + "\n")
-        send("HOST'S REMAINING SHIPS:\n")
-        send(ship_remaining_to_string(server_ships) + "\n")
+    while player_loss == False and server_loss == False and RUNNING == True:
+        #handling players leaving mid match
+        try:
+            send("YOUR BOARD:\n")
+            send(board_to_string(player_board) + "\n")
+            send("YOUR GUESSING BOARD:\n")
+            send(board_to_string(player_guess) + "\n")
+            send("HOST'S REMAINING SHIPS:\n")
+            send(ship_remaining_to_string(server_ships) + "\n")
 
-        #player's turn
-        valid_move = False
-        while valid_move == False:
-            reply = send_and_recieve("Where to hit: ")
-            res = input_to_coordinate(reply)
-            try:
-                row, column = res
-                if res != None and res != "":
-                    if(player_guess[row][column] != HIT and player_guess[row][column] != MISS):
-                        if server_board[row][column] != UNKNOWN:
-                            player_guess[row][column] = HIT
-                            server_board[row][column] = HIT
-                        elif server_board[row][column] == UNKNOWN:
-                            player_guess[row][column] = MISS
-                            server_board[row][column] = MISS
+            #player's turn
+            valid_move = False
+            while valid_move == False:
+                reply = send_and_recieve("Where to hit: ")
+                res = input_to_coordinate(reply)
+                try:
+                    row, column = res
+                    if res != None and res != "":
+                        if(player_guess[row][column] != HIT and player_guess[row][column] != MISS):
+                            if server_board[row][column] != UNKNOWN:
+                                player_guess[row][column] = HIT
+                                server_board[row][column] = HIT
+                                send(("Message: You have hit a ship[" + reply[0] + reply[1] + "]\n"))
+                                print(("Message: Client has hit a ship[" + reply[0] + reply[1] + "]"))
+                            elif server_board[row][column] == UNKNOWN:
+                                player_guess[row][column] = MISS
+                                server_board[row][column] = MISS
+                                send(("Message: You have missed[" + reply[0] + reply[1] + "]\n"))
+                                print(("Message: Client has missed[" + reply[0] + reply[1] + "]"))
+                            else:
+                                player_guess[row][column] = "?"
+                                server_board[row][column] = "?"
+                            valid_move = True
                         else:
-                            player_guess[row][column] = "?"
-                            server_board[row][column] = "?"
-                        valid_move = True
+                            send("Please enter a different co-ordinate.\n")
                     else:
-                        send("Please enter a different co-ordinate.\n")
-                else:
-                    send("Try inputting a valid co-ordinate\n")
-            except:
-                send("Please enter a 2 character input.\n")
-        send("===============================\n")
+                        send("Try inputting a valid co-ordinate\n")
+                except:
+                    send("Please enter a 2 character input.\n")
+            send("===============================\n")
 
-        #check if any of host's ships has been sunk
-        check_sunk(server_board, server_ships)
-        #check if player has won
-        server_loss = check_loss(server_board)
+            #check if any of host's ships has been sunk
+            check_sunk(server_board, server_ships)
+            #check if player has won
+            server_loss = check_loss(server_board)
         
-        #server's turn
-        if server_loss == False:
-            servers_turn()
+        
 
-        print("==============================")
-        check_sunk(player_board, player_ships)
-        player_loss = check_loss(player_board)
-    
-    if player_loss == True:
-        send("You lost! Reconnect to try again.\n")
-        print("You won! Start up the program to play again!")
-    elif server_loss == True:
-        send("You won! Reconnect to play again!\n")
-        print("You lost! Start up the program to play again!")
-    else:
-        send("How?\n")
-    
-    time.sleep(3)
+            #server's turn
+            if server_loss == False:
+                servers_turn()
 
-    #this is logic for finalization of the game for the server side
+            print("==============================")
+            check_sunk(player_board, player_ships)
+            player_loss = check_loss(player_board)
 
-    print("Client's Ships: ")
-    print(board_to_string(player_board_copy))
+        #handle mid disconnects
+        except ConnectionResetError:
+            print(f"Connection forcibly reset")
+            RUNNING = False
+        except ConnectionAbortedError:
+            print(f"Connection aborted.")
+            RUNNING = False
 
-    print("Your Ships: ")
-    print(board_to_string(server_board_copy))
+    #attempt to do endgame stuff
+    try:
+        if player_loss == True:
+            send("You lost! Reconnect to try again.\n")
+            print("You won! Start up the program to play again!")
+        elif server_loss == True:
+            send("You won! Reconnect to play again!\n")
+            print("You lost! Start up the program to play again!")
 
-    send("Host's Ships: \n")
-    send((board_to_string(player_board_copy) + "\n"))
-    send("Your Ships: \n")
-    send((board_to_string(server_board_copy) + "\n"))
-    
-    end_signal()
+        time.sleep(3)
+
+        #this is logic for finalization of the game for the server side
+
+        print("Client's Ships: ")
+        print(board_to_string(player_board_copy))
+
+        print("Your Ships: ")
+        print(board_to_string(server_board_copy))
+
+        send("Host's Ships: \n")
+        send((board_to_string(player_board_copy) + "\n"))
+        send("Your Ships: \n")
+        send((board_to_string(server_board_copy) + "\n"))
+        
+        end_signal()
+    #of course, on a broken connection, send() wont work, and it would jump to these
+    except ConnectionResetError:
+        pass
+    except ConnectionAbortedError:
+        pass
 
     return
 
@@ -592,7 +618,7 @@ def player():
             print("\n",end="")
             valid_port = True
         except:
-            print("Try again...")
+            print("Please try inputting a valid port")
 
     CLIENT = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     CLIENT.connect((HOST, PORT))
