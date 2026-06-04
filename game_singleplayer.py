@@ -112,47 +112,6 @@ player_board_copy = []
 server_board_copy = []
 
 #=====UTILITIES=====
-def menu():
-    valid_input = False
-    choice = 0
-    print("Welcome To Battleship\n1.Setup Server\n2. Setup as player\n3.Exit")
-    while valid_input == False:
-        try:
-            choice = int(input(">> "))
-            if choice == 1 or choice == 2 or choice == 3:
-               valid_input = True 
-        except:
-            print("Please enter a correct co-ordinate")
-    return choice
-
-def get_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(('8.8.8.8', 80))
-        ip = s.getsockname()[0]
-    except Exception:
-        ip = '127.0.0.1'
-    finally:
-        s.close()
-    return ip
-
-def send(text):
-    conn.sendall((ZHAO_LANG_SYNTAX["PRINT"] +" "+ text + "\n"+"|").encode())
-
-def recieve():
-    conn.sendall(ZHAO_LANG_SYNTAX["IMMEDIATE REPLY"])
-    data = conn.recv(1024).decode()
-    return data
-
-def send_and_recieve(text):
-    conn.sendall((ZHAO_LANG_SYNTAX["PRINT WITH REPLY"] + " " + text + "\n"+"|").encode())
-    data = conn.recv(1024).decode()
-    return data
-
-def end_signal():
-    conn.sendall((ZHAO_LANG_SYNTAX["GAME END"] + "|").encode())
-    return
-
 def board_to_string(board):
     string = ""
     string = string + board_header + "\n"
@@ -210,11 +169,11 @@ def player_setup():
     valid_input = False
     while valid_input == False:
         try:
-            choice = int((send_and_recieve("Would you like a randomized setup? [1: Yes 2: No]"))[0])
+            choice = int((input("Would you like a randomized setup? [1: Yes 2: No]"))[0])
             if choice == 1 or choice == 2:
                 valid_input = True
         except:
-            send("Your input is invalid, try again.\n")
+            print("Your input is invalid, try again.\n")
 
     if choice == 1:
         random_setup(player_board)
@@ -223,17 +182,17 @@ def player_setup():
             valid_placement = False
             while(valid_placement == False):
                 try:
-                    send((board_to_string(player_board) + "\n"))
-                    send((("Setting up for: " + SHIP[i]) + "\n"))
+                    print((board_to_string(player_board)))
+                    print((("Setting up for: " + SHIP[i])))
                     
-                    reply = send_and_recieve(("Co-ordinates (Letter, Row Number): "))
+                    reply = input(("Co-ordinates (Letter, Row Number): "))
                     result = input_to_coordinate(reply)
                     if result != None and result != "":
                         row, column = result
-                        orientation = send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ")
+                        orientation = input("Orientation [V (Vertical)/ H (Horizontal)]: ")
                         valid_placement = place_ship(row, column, SHIP[i], player_board, orientation)
                 except IndexError:
-                    send("Please enter a valid placement.\n")
+                    print("Please enter a valid placement.")
     return
 
 def server_setup():
@@ -279,14 +238,11 @@ def check_sunk(board, state):
             #update state information
             state[i] = shadow_state[i]
             if state is player_ships:
-                send(("Message: Client's " + SHIP[i] + " has sunk!\n"))
-                print("Message: Client's " + SHIP[i]+ " has sunk!")
+                print(("Message: Client's " + SHIP[i] + " has sunk!"))
             elif state is server_ships:
-                send(("Message: Host's " + SHIP[i] + " has sunk!\n"))
-                print("Message: Host's " + SHIP[i]+ " has sunk!")
+                print(("Message: Host's " + SHIP[i] + " has sunk!\n"))
             else:
-                send(("Message: " + SHIP[i] + " has sunk!\n"))
-                print("Message: " + SHIP[i]+ " has sunk!")
+                print(("Message: " + SHIP[i] + " has sunk!\n"))
     return
 
 def ship_remaining_to_string(ships):
@@ -298,11 +254,15 @@ def ship_remaining_to_string(ships):
     return text
 
 #=====Algorithm====
+#the algorithm has 4 moves to play before it starts attacking the player
 pre_AI_moves = [(1,1),(1,8),(8,1),(8,8)]
 
 SHIP_SIZE = [2,3,3,4,5]
+
+#we give biases to the computer for surrounding points next to hits that arent misses
 WEIGHT = 5
 
+#We check how many configurations a cell on the board can be
 def check_count(board, row, col, ship_size):
     count = 0
 
@@ -362,6 +322,7 @@ def check_count(board, row, col, ship_size):
 
     return count
 
+#we create a probability matrix
 def probability_function(original, board):
     #strip the board of all of its bloat
     for r in range(0,SIZE):
@@ -403,6 +364,7 @@ def probability_function(original, board):
 
     return probability_density
 
+#we then choose a move given the probability function
 def servers_turn(board, move_no):
     if move_no <= len(pre_AI_moves):
         return pre_AI_moves[(move_no - 1)]
@@ -426,6 +388,7 @@ def server_runtime():
     computer_turn_count = 0
     
     player_setup()
+    time.sleep(3) #I have problems where sometimes the player and the server gets the same board, so I have to add an delay to reset how random works
     server_setup()
 
     #this is just used to keep track of old player boards. However, it probably wont be used much
@@ -437,17 +400,17 @@ def server_runtime():
     
     #the game happens here
     while player_loss == False and server_loss == False:
-        send("YOUR BOARD:\n")
-        send(board_to_string(player_board) + "\n")
-        send("YOUR GUESSING BOARD:\n")
-        send(board_to_string(player_guess) + "\n")
-        send("HOST'S REMAINING SHIPS:\n")
-        send(ship_remaining_to_string(server_ships) + "\n")
+        print("YOUR BOARD:")
+        print(board_to_string(player_board))
+        print("YOUR GUESSING BOARD:\n")
+        print(board_to_string(player_guess))
+        print("HOST'S REMAINING SHIPS:\n")
+        print(ship_remaining_to_string(server_ships))
 
         #player's turn
         valid_move = False
         while valid_move == False:
-            reply = send_and_recieve("Where to hit: ")
+            reply = input("Where to hit: ")
             res = input_to_coordinate(reply)
             try:
                 row, column = res
@@ -464,12 +427,12 @@ def server_runtime():
                             server_board[row][column] = "?"
                         valid_move = True
                     else:
-                        send("Try choosing a different co-ordinate")
+                        print("Try choosing a different co-ordinate")
                 else:
-                    send("Try inputting a valid co-ordinate\n")
+                    print("Try inputting a valid co-ordinate")
             except:
-                send("Please enter a full input.\n")
-        send("===============================\n")
+                print("Please enter a full input.")
+        print("===============================")
 
         #check if any of host's ships has been sunk
         check_sunk(server_board, server_ships)
@@ -478,7 +441,6 @@ def server_runtime():
         
         #server's turn
         if server_loss == False:
-            print("Server's turn!")
             computer_turn_count = computer_turn_count + 1
             AI_row, AI_col = servers_turn(server_guess,computer_turn_count)
             if player_board[AI_row][AI_col] != UNKNOWN:
@@ -488,162 +450,25 @@ def server_runtime():
                 server_guess[AI_row][AI_col] = MISS
                 player_board[AI_row][AI_col] = MISS
 
-        print("==============================")
         check_sunk(player_board, player_ships)
         player_loss = check_loss(player_board)
     
     if player_loss == True:
-        send("You lost! Reconnect to try again.\n")
-        print("You won! Start up the program to play again!")
+        print("You lost!")
     elif server_loss == True:
-        send("You won! Reconnect to play again!\n")
-        print("You lost! Start up the program to play again!")
+        print("You won!")
     else:
-        send("How?\n")
+        print("How?\n")
     
     time.sleep(3)
 
     #this is logic for finalization of the game for the server side
 
-    print("Client's Ships: ")
+    print("Host's Ships:")
     print(board_to_string(player_board_copy))
-
-    print("Your Ships: ")
+    print("Your Ships:")
     print(board_to_string(server_board_copy))
 
-    send("Host's Ships: \n")
-    send((board_to_string(server_board_copy) + "\n"))
-    send("Your Ships: \n")
-    send((board_to_string(server_board_copy) + "\n"))
-    
-    end_signal()
-
     return
 
-def server():
-    #setup server
-    global HOST
-    global PORT
-
-    global SERVER
-    global conn
-    global addr
-
-    HOST = get_ip()
-    PORT = 0
-    valid_port = False
-    while valid_port == False:
-        try:
-            PORT = int(input("Port to listen from: "))
-            valid_port = True
-        except:
-            print("Enter a valid port")
-
-    print("IP Address: " + HOST)
-    print("PORT: " + str(PORT))
-
-    #find client:
-    SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    SERVER.bind((HOST,PORT))
-    SERVER.listen(1)
-
-    print("Waiting for player to connect....")
-    conn,addr = SERVER.accept()
-    print("Connected to: ", addr)
-
-    server_runtime()
-
-    conn.close()
-    SERVER.close()
-
-    return
-
-#client part of the script
-
-RUNNING = True
-
-def interpret(text):
-    global RUNNING
-    parse = text.split(" ",1)
-    valid_input = False
-    if parse[0] == ZHAO_LANG_SYNTAX["GAME END"]:
-        RUNNING = False
-    
-    elif parse[0] == ZHAO_LANG_SYNTAX["PRINT"]:
-        print(parse[1])
-
-    elif parse[0] == ZHAO_LANG_SYNTAX["IMMEDIATE REPLY"]:
-        while valid_input == False:
-            response = input(">> ")
-            if len(response) > 0:
-                valid_input = True
-                CLIENT.sendall(response.encode())
-            else:
-                print("You pressed enter without typing anything, try again.")
-    
-    elif parse[0] == ZHAO_LANG_SYNTAX["PRINT WITH REPLY"]:
-        print(parse[1])
-        while valid_input == False:
-            response = input(">> ")
-            if len(response) > 0:
-                valid_input = True
-                CLIENT.sendall(response.encode())
-            else:
-                print("You pressed enter without typing anything, try again.")
-
-    return
-
-def player_runtime():
-    global RUNNING
-    buffer = ""
-
-    while RUNNING == True:
-        data = CLIENT.recv(1024).decode()
-        if data:
-            buffer = buffer + data
-
-        while "|" in buffer:
-            instruction, buffer = buffer.split("|",1)
-            if instruction.strip():
-                result = interpret(instruction.strip())
-    return
-
-def player():
-    global HOST
-    global PORT
-
-    global CLIENT
-
-    print("Host IP: ",end="")
-    HOST = input()
-    valid_port = False
-    while valid_port == False:
-        try:
-            print("Host PORT: ",end="")
-            PORT = int(input())
-            print("\n",end="")
-            valid_port = True
-        except:
-            print("Try again...")
-
-    CLIENT = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    CLIENT.connect((HOST, PORT))
-
-    player_runtime()
-
-    CLIENT.close()
-
-    return
-
-#actual entry
-def multiplayer():
-    choice = menu()
-    match choice:
-        case 1:
-            server()
-        case 2:
-            player()
-        case 3:
-            return
-
-multiplayer()
+server_runtime()

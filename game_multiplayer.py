@@ -1,8 +1,12 @@
+#this code will be documented as it is the most verbose and more complete version of the project
+
 import random
 import socket
 import copy
 import time
 
+#this is how our clients will interact with each other
+#they use a custom language to communicate
 ZHAO_LANG_SYNTAX = {
     "PRINT": "PRNT",
     "IMMEDIATE REPLY": "IREP",
@@ -10,6 +14,8 @@ ZHAO_LANG_SYNTAX = {
     "GAME END" : "GEND",
 }
 
+#Since the server and game are required to be on one file,
+#I have defined them here
 conn = None
 addr = None
 SERVER = None
@@ -18,7 +24,11 @@ HOST = None
 PORT = None
 CLIENT = None
 
+#This contains foundational data for battleship
+#size of the board
 SIZE = 10
+
+#ships are defined in this order:
 SHIP = ["carrier", "battleship", "cruiser","submarine","destroyer"]
 SHIP_DATA = {
     "carrier": 5,
@@ -34,15 +44,19 @@ SHIP_REPRESENTATION = {
     "submarine": 'S',
     "destroyer": 'D'
 }
+
+#these are representations for the ship
 UNKNOWN = '~'
 HIT = 'X'
 MISS = 'O'
 
+#thesea are constants for setups
 VERTICAL = "V"
 HORIZONTAL = "H"
 
 ORIENTATIONS = [VERTICAL,HORIZONTAL]
 
+#these are for conversions when the user wants to input a co-ordinate
 board_header = "X A B C D E F G H I J"
 board_header_to_column = {
     "A" : 0,
@@ -57,6 +71,7 @@ board_header_to_column = {
     "J" : 9
 }
 
+#these are the client and host boards
 player_board = [
     ['~','~','~','~','~','~','~','~','~','~'],
     ['~','~','~','~','~','~','~','~','~','~'],
@@ -112,6 +127,7 @@ player_board_copy = []
 server_board_copy = []
 
 #=====UTILITIES=====
+#main menu
 def menu():
     valid_input = False
     choice = 0
@@ -125,6 +141,7 @@ def menu():
             print("Please enter a valid input")
     return choice
 
+#displays ip address for the user to know what to enter
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -136,6 +153,7 @@ def get_ip():
         s.close()
     return ip
 
+#this is the server side's execution of the language
 def send(text):
     conn.sendall((ZHAO_LANG_SYNTAX["PRINT"] +" "+ text + "\n"+"|").encode())
 
@@ -153,6 +171,7 @@ def end_signal():
     conn.sendall((ZHAO_LANG_SYNTAX["GAME END"] + "|").encode())
     return
 
+#this is how boards will be displayed over the internet
 def board_to_string(board):
     string = ""
     string = string + board_header + "\n"
@@ -164,6 +183,7 @@ def board_to_string(board):
         string = string + "\n"
     return string
 
+#this is how we check and place ships on the player's respective boards
 def place_ship(row, col, ship, board, orientation):
     try:
         if orientation == VERTICAL:
@@ -184,6 +204,7 @@ def place_ship(row, col, ship, board, orientation):
     except IndexError:
         return False
 
+#when players start shooting shots, this is how we convert it
 def input_to_coordinate(text):
     try:
         column = board_header_to_column[text[0]]
@@ -193,6 +214,8 @@ def input_to_coordinate(text):
         return None
 
 #=====SETUP=====
+
+#this is if a player wants to minimize time and use a random board
 def random_setup(board):
     for i in range(0, len(SHIP)):
         valid_placement = False
@@ -204,6 +227,7 @@ def random_setup(board):
             valid_placement = place_ship(row, col, SHIP[i],board,orient)
     return
 
+#client side setup. player_setup() is kept as legacy because im too lazy to change it
 def player_setup():
     choice = 0
     valid_input = False
@@ -239,6 +263,7 @@ def player_setup():
                     send("Your current placment overlaps other ship(s), try again.\n")
     return
 
+#host's setup. server_setup() is kept as legacy
 def server_setup():
     choice = 0
     valid_input = False
@@ -273,6 +298,7 @@ def server_setup():
     return
 
 #=====Game Stuff=====
+#checks if a player has lost based on their board
 def check_loss(board):
     #while it is entirely possible to use the data, this is a lot more solid because its cooler lol
     loss = True
@@ -282,6 +308,7 @@ def check_loss(board):
                 return False
     return True
 
+#this is how we track if a player has their ships sunk or not compared to the previous move
 player_ships = [True, True, True, True, True]
 server_ships = [True, True, True, True, True]
 
@@ -314,6 +341,7 @@ def check_sunk(board, state):
                 print("Message: " + SHIP[i]+ " has sunk!")
     return
 
+#we then convert the remaining ships to a string for each side to use
 def ship_remaining_to_string(ships):
     text = "Enemy Remaining: "
     for i in range(0,len(ships)):
@@ -360,6 +388,7 @@ def servers_turn():
     return
 
 #=====Runtimes=====
+#main server runtime
 def server_runtime():
     computer_turn_count = 0
     
@@ -442,7 +471,7 @@ def server_runtime():
     print(board_to_string(server_board_copy))
 
     send("Host's Ships: \n")
-    send((board_to_string(server_board_copy) + "\n"))
+    send((board_to_string(player_board_copy) + "\n"))
     send("Your Ships: \n")
     send((board_to_string(server_board_copy) + "\n"))
     
@@ -450,6 +479,7 @@ def server_runtime():
 
     return
 
+#server entrypoint and setup
 def server():
     #setup server
     global HOST
@@ -490,8 +520,14 @@ def server():
 
 #client part of the script
 
+#the client is simple, it is only designed to do two things:
+#1. Print when told to
+#2. Respond when told to
+#3. End the game when told to
+
 RUNNING = True
 
+#this is how my language is interpreted by the client
 def interpret(text):
     global RUNNING
     parse = text.split(" ",1)
@@ -523,6 +559,7 @@ def interpret(text):
 
     return
 
+#client runtime player_runtime() is legacy naming
 def player_runtime():
     global RUNNING
     buffer = ""
@@ -538,6 +575,7 @@ def player_runtime():
                 result = interpret(instruction.strip())
     return
 
+#entrypoint for the client
 def player():
     global HOST
     global PORT
@@ -565,7 +603,7 @@ def player():
 
     return
 
-#actual entry
+#All code starts from here
 def multiplayer():
     choice = menu()
     match choice:
