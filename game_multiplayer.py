@@ -4,6 +4,7 @@ import random
 import socket
 import copy
 import time
+import os
 
 #this is how our clients will interact with each other
 #they use a custom language to communicate
@@ -12,6 +13,7 @@ ZHAO_LANG_SYNTAX = {
     "IMMEDIATE REPLY": "IREP",
     "PRINT WITH REPLY": "PREP",
     "GAME END" : "GEND",
+    "CLS" : "CLS"
 }
 
 #Since the server and game are required to be on one file,
@@ -23,6 +25,13 @@ SERVER = None
 HOST = None
 PORT = None
 CLIENT = None
+
+#this is the command for clearing the terminal
+CLEAR = "clear"
+#depending on if the system is a Unix or Unix adjacent or Windows NT device, the clear signal is different
+if os.name == "nt":
+    os.system("")
+    CLEAR = "cls"
 
 #This contains foundational data for battleship
 #size of the board
@@ -127,6 +136,10 @@ player_board_copy = []
 server_board_copy = []
 
 #=====UTILITIES=====
+#clears terminal screen
+def clear_screen():
+    os.system(CLEAR)
+
 #main menu
 def menu():
     valid_input = False
@@ -170,6 +183,9 @@ def send_and_recieve(text):
 def end_signal():
     conn.sendall((ZHAO_LANG_SYNTAX["GAME END"] + "|").encode())
     return
+
+def clear_signal():
+    conn.sendall((ZHAO_LANG_SYNTAX["CLS"] + "|").encode())
 
 #this is how boards will be displayed over the internet
 def board_to_string(board):
@@ -248,6 +264,7 @@ def player_setup():
             valid_placement = False
             while(valid_placement == False):
                 try:
+                    clear_signal()
                     send((board_to_string(player_board) + "\n"))
                     send((("Setting up for: " + SHIP[i]) + "\n"))
                     
@@ -258,9 +275,12 @@ def player_setup():
                         orientation = send_and_recieve("Orientation [V (Vertical)/ H (Horizontal)]: ")
                         valid_placement = place_ship(row, column, SHIP[i], player_board, orientation)
                 except IndexError:
+                    clear_signal()
                     send("Please enter a valid placement.\n")
                 if valid_placement == False:
+                    clear_signal()
                     send("Your current placment overlaps other ship(s), try again.\n")
+            clear_signal()
     return
 
 #host's setup. server_setup() is kept as legacy
@@ -282,6 +302,7 @@ def server_setup():
             valid_placement = False
             while(valid_placement == False):
                 try:
+                    clear_screen()
                     print(board_to_string(server_board))
                     print(("Setting up for: " + SHIP[i]))
                     
@@ -292,9 +313,12 @@ def server_setup():
                         orientation = input("Orientation [V (Vertical)/ H (Horizontal)]: ")
                         valid_placement = place_ship(row, column, SHIP[i], server_board, orientation)
                 except IndexError:
+                    clear_screen()
                     print("Please enter a valid placement.")
                 if valid_placement == False:
-                    print("Your current placement overlaps other ship(s), try again.")
+                    clear_screen()
+                    print("Your current placement overlaps other ship(s), try again.")       
+            clear_screen()
     return
 
 #=====Game Stuff=====
@@ -394,11 +418,15 @@ def servers_turn():
 #=====Runtimes=====
 #main server runtime
 def server_runtime():
+    clear_screen()
+    
     RUNNING = True
     computer_turn_count = 0
     
     player_setup()
     server_setup()
+
+    clear_screen()
 
     #this is just used to keep track of old player boards. However, it probably wont be used much
     player_board_copy = copy.deepcopy(player_board)
@@ -454,7 +482,7 @@ def server_runtime():
             #check if player has won
             server_loss = check_loss(server_board)
         
-        
+            clear_screen()
 
             #server's turn
             if server_loss == False:
@@ -463,6 +491,8 @@ def server_runtime():
             print("==============================")
             check_sunk(player_board, player_ships)
             player_loss = check_loss(player_board)
+
+            clear_signal()
 
         #handle mid disconnects
         except ConnectionResetError:
@@ -507,6 +537,8 @@ def server_runtime():
 
 #server entrypoint and setup
 def server():
+    clear_screen()
+
     #setup server
     global HOST
     global PORT
@@ -525,6 +557,8 @@ def server():
         except:
             print("Enter a valid port")
 
+    clear_screen()
+
     print("IP Address: " + HOST)
     print("PORT: " + str(PORT))
 
@@ -537,6 +571,7 @@ def server():
     conn,addr = SERVER.accept()
     print("Connected to: ", addr)
 
+    clear_screen()
     server_runtime()
 
     conn.close()
@@ -582,13 +617,18 @@ def interpret(text):
                 CLIENT.sendall(response.encode())
             else:
                 print("You entered without typing. Try again.")
+    
+    elif parse[0] == ZHAO_LANG_SYNTAX["CLS"]:
+        clear_screen()
 
     return
 
-#client runtime player_runtime() is legacy naming
+#client runtime player_runtime() is legacy naming, client's version instead
 def player_runtime():
     global RUNNING
     buffer = ""
+
+    clear_screen()
 
     while RUNNING == True:
         data = CLIENT.recv(1024).decode()
@@ -603,6 +643,7 @@ def player_runtime():
 
 #entrypoint for the client
 def player():
+    clear_screen()
     global HOST
     global PORT
 
@@ -631,7 +672,9 @@ def player():
 
 #All code starts from here
 def multiplayer():
+    clear_screen()
     choice = menu()
+    clear_screen()
     match choice:
         case 1:
             server()
