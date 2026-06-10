@@ -181,7 +181,7 @@ def player_setup():
     valid_input = False
     while valid_input == False:
         try:
-            choice = int((input("Would you like a randomized setup? [1: Yes 2: No]"))[0])
+            choice = int((input("Would you like a randomized setup? [1: Yes 2: No]: "))[0])
             if choice == 1 or choice == 2:
                 valid_input = True
         except:
