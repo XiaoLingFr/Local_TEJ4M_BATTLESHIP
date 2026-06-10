@@ -498,9 +498,11 @@ def server_runtime():
         except ConnectionResetError:
             print(f"Connection forcibly reset")
             RUNNING = False
+            return False
         except ConnectionAbortedError:
             print(f"Connection aborted.")
             RUNNING = False
+            return False
 
     #attempt to do endgame stuff
     try:
@@ -529,11 +531,11 @@ def server_runtime():
         end_signal()
     #of course, on a broken connection, send() wont work, and it would jump to these
     except ConnectionResetError:
-        pass
+        return False
     except ConnectionAbortedError:
-        pass
+        return False
 
-    return
+    return True
 
 #server entrypoint and setup
 def server():
@@ -572,12 +574,12 @@ def server():
     print("Connected to: ", addr)
 
     clear_screen()
-    server_runtime()
+    end = server_runtime()
 
     conn.close()
     SERVER.close()
 
-    return
+    return end
 
 #client part of the script
 
@@ -631,7 +633,10 @@ def player_runtime():
     clear_screen()
 
     while RUNNING == True:
-        data = CLIENT.recv(1024).decode()
+        try:
+            data = CLIENT.recv(1024).decode()
+        except:
+            return False
         if data:
             buffer = buffer + data
 
@@ -639,7 +644,7 @@ def player_runtime():
             instruction, buffer = buffer.split("|",1)
             if instruction.strip():
                 result = interpret(instruction.strip())
-    return
+    return True
 
 #entrypoint for the client
 def player():
@@ -649,8 +654,17 @@ def player():
 
     global CLIENT
 
-    print("Host IP: ",end="")
-    HOST = input()
+    valid_IP = False
+    while valid_IP == False:
+        try:
+            print("Host IP: ",end="")
+            HOST = input()
+            CLIENT = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.inet_atom(HOST)
+            valid_IP = True
+        except: 
+            print("Enter a valid IP Address")
+
     valid_port = False
     while valid_port == False:
         try:
@@ -660,15 +674,17 @@ def player():
             valid_port = True
         except:
             print("Please try inputting a valid port")
-
-    CLIENT = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    CLIENT.connect((HOST, PORT))
-
-    player_runtime()
+    try:
+        CLIENT.connect((HOST, PORT))
+    except:
+        print("An error has occured")
+        return False
+    
+    end = player_runtime()
 
     CLIENT.close()
 
-    return
+    return end 
 
 #All code starts from here
 def multiplayer():
@@ -677,10 +693,15 @@ def multiplayer():
     clear_screen()
     match choice:
         case 1:
-            server()
+            return server()
         case 2:
-            player()
+            return player()
         case 3:
-            return
+            return True
 
-multiplayer()
+end = multiplayer()
+
+if end == True:
+    print("Game exited with True status: Success")
+else:
+    print("Game exited with False status: Error")
