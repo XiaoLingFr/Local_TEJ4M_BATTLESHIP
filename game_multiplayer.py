@@ -660,7 +660,7 @@ def player():
             print("Host IP: ",end="")
             HOST = input()
             CLIENT = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            socket.inet_atom(HOST)
+            socket.inet_aton(HOST)
             valid_IP = True
         except: 
             print("Enter a valid IP Address")
