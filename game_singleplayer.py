@@ -502,9 +502,9 @@ def server_runtime():
     #this is logic for finalization of the game for the server side
 
     print("Host's Ships:")
-    print(board_to_string(player_board_copy))
-    print("Your Ships:")
     print(board_to_string(server_board_copy))
+    print("Your Ships:")
+    print(board_to_string(player_board_copy))
 
     return
 
