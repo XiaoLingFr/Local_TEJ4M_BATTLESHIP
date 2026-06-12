@@ -232,6 +232,7 @@ def check_loss(board):
                 return False
     return True
 
+#these are statuses of each player's ships they follow the order of the SHIPS array
 player_ships = [True, True, True, True, True]
 server_ships = [True, True, True, True, True]
 
@@ -276,13 +277,12 @@ pre_AI_moves = [(1,1),(1,8),(8,1),(8,8)]
 SHIP_SIZE = [2,3,3,4,5]
 
 #we give biases to the computer for surrounding points next to hits that arent misses
-WEIGHT = 5
+WEIGHT = 1
 
 #We check how many configurations a cell on the board can be
 def check_count(board, row, col, ship_size):
     count = 0
 
-    #Down Case
     down = True
     right = True
 
@@ -308,7 +308,7 @@ def check_count(board, row, col, ship_size):
     except IndexError:
         right = False
         pass
-    
+
     #up case:
     if row - ship_size + 1 < 0:
         up = False
@@ -327,13 +327,14 @@ def check_count(board, row, col, ship_size):
                 left = False
                 break
 
-    if up == True:
-        count = count + 1
     if down == True:
         count = count + 1
-    if left == True:
-        count = count + 1
     if right == True:
+        count = count + 1
+
+    if up == True:
+        count = count + 1
+    if left == True:
         count = count + 1
 
     return count
@@ -353,7 +354,9 @@ def probability_function(original, board):
         for c in range(0,SIZE):
             num = 0
             for i in range(0, len(SHIP_SIZE)):
-                num = num + check_count(board, r, c, SHIP_SIZE[i])
+                #we check if the player's ships do exist (the players are given information about each others ship statuses)
+                if player_ships[i] == True:
+                    num = num + check_count(board, r, c, SHIP_SIZE[i])
             row_prob.append(num)
         probability_density.append(row_prob)
     
@@ -375,7 +378,7 @@ def probability_function(original, board):
     #if we dont overwrite the hit with 0s, the AI will never move onto the next valid move
     for r in range(0,SIZE):
         for c in range(0,SIZE):
-            if original[r][c] == HIT:
+            if original[r][c] == HIT or original[r][c] == MISS:
                 probability_density[r][c] = 0
 
     return probability_density
