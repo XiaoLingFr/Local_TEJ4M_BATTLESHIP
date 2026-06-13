@@ -278,7 +278,7 @@ def player_setup():
                     send("Please enter a valid placement.\n")
                 if valid_placement == False:
                     clear_signal()
-                    send("Your current placment cannot exist as it is, try again\n")
+                    send("Your current placement overlaps other ship(s) or goes out of bounds.\nTry again.\n")
             clear_signal()
     return
 
@@ -316,7 +316,7 @@ def server_setup():
                     print("Please enter a valid placement.")
                 if valid_placement == False:
                     clear_screen()
-                    print("Your current placement overlaps other ship(s), try again.")       
+                    print("Your current placement overlaps other ship(s) or goes out of bounds.\nTry again.")       
             clear_screen()
     return
 
@@ -412,7 +412,7 @@ def servers_turn():
             else:
                 print("Try inputting a valid co-ordinate.")
         except:
-            print("Please enter an input with 2 characters.")
+            print("An invalid input was made, try again.")
     return
 
 #=====Runtimes=====
@@ -475,7 +475,7 @@ def server_runtime():
                     else:
                         send("Try inputting a valid co-ordinate\n")
                 except:
-                    send("Please enter a 2 character input.\n")
+                    send("An invalid input was made. Try again.\n")
             
             clear_screen()
             
