@@ -279,7 +279,7 @@ def player_setup():
                     send("Please enter a valid placement.\n")
                 if valid_placement == False:
                     clear_signal()
-                    send("Your current placment overlaps other ship(s), try again.\n")
+                    send("Your current placment cannot exist as it is, try again\n")
             clear_signal()
     return
 
@@ -427,6 +427,7 @@ def server_runtime():
     server_setup()
 
     clear_screen()
+    clear_signal()
 
     #this is just used to keep track of old player boards. However, it probably wont be used much
     player_board_copy = copy.deepcopy(player_board)
@@ -504,8 +505,12 @@ def server_runtime():
             RUNNING = False
             return False
 
+    time.sleep(3)
+
     #attempt to do endgame stuff
     try:
+        clear_screen()
+        clear_signal()
         if player_loss == True:
             send("You lost! Reconnect to try again.\n")
             print("You won! Start up the program to play again!")
@@ -513,18 +518,21 @@ def server_runtime():
             send("You won! Reconnect to play again!\n")
             print("You lost! Start up the program to play again!")
 
-        time.sleep(3)
+        time.sleep(2)
 
         #this is logic for finalization of the game for the server side
 
         print("Client's Ships: ")
         print(board_to_string(player_board_copy))
-
+        print("Your guesses: ")
+        print(board_to_string(server_guess))
         print("Your Ships: ")
         print(board_to_string(server_board_copy))
 
         send("Host's Ships: \n")
-        send((board_to_string(player_board_copy) + "\n"))
+        send((board_to_string(server) + "\n"))
+        send("Your guesses: \n")
+        send((board_to_string(player_guess) + "\n"))
         send("Your Ships: \n")
         send((board_to_string(server_board_copy) + "\n"))
         
