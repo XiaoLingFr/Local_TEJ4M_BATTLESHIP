@@ -440,8 +440,6 @@ def server_runtime():
     while player_loss == False and server_loss == False and RUNNING == True:
         #handling players leaving mid match
         try:
-            clear_screen()
-
             send("YOUR BOARD:\n")
             send(board_to_string(player_board) + "\n")
             send("YOUR GUESSING BOARD:\n")
@@ -478,7 +476,9 @@ def server_runtime():
                         send("Try inputting a valid co-ordinate\n")
                 except:
                     send("Please enter a 2 character input.\n")
-
+            
+            clear_screen()
+            
             #check states of players and ships for the server
             check_sunk(server_board, server_ships)
             server_loss = check_loss(server_board)
