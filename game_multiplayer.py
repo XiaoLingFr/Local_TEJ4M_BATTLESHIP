@@ -637,6 +637,9 @@ def server():
         conn.close()
         SERVER.close()
 
+    #occasionally you'll get a weird niche case
+    #where the port has been used by another application
+    #or your previous run of server didnt close properly
     except OSError as e:
         if e.errno == errno.EADDRINUSE:
             print("Port is already in use. Please choose a different port.")
