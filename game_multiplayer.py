@@ -578,6 +578,7 @@ def server_runtime():
         send((board_to_string(player_board_copy) + "\n"))
         
         end_signal()
+    
     #of course, on a broken connection, send() wont work, and it would jump to these
     except ConnectionResetError:
         return False
@@ -639,6 +640,8 @@ def server():
     except OSError as e:
         if e.errno == errno.EADDRINUSE:
             print("Port is already in use. Please choose a different port.")
+        else:
+            print("You may have entered an invalid port or an error has occurred.")
         return False
     return end
 
