@@ -7,6 +7,7 @@ import socket
 import copy
 import time
 import os
+import errno
 
 #this is how our clients will interact with each other
 #they use a custom language to communicate
@@ -442,6 +443,8 @@ def server_runtime():
     try:
         player_setup()
         server_setup()
+    #these are the 3 network errors I saw commonly
+    #i decided to add these here
     except ConnectionResetError:
         print(f"Connection forcibly reset")
         RUNNING = False
@@ -614,24 +617,29 @@ def server():
     print("IP Address: " + HOST)
     print("PORT: " + str(PORT))
 
-    #find client:
-    SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    SERVER.bind((HOST,PORT))
-    SERVER.listen(1)
+    try:
+        #find client:
+        SERVER = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        SERVER.bind((HOST,PORT))
+        SERVER.listen(1)
 
-    #wait for user
-    print("Waiting for player to connect....")
-    conn,addr = SERVER.accept()
-    print("Connected to: ", addr)
+        #wait for user
+        print("Waiting for player to connect....")
+        conn,addr = SERVER.accept()
+        print("Connected to: ", addr)
 
-    clear_screen()
-    
-    #tells the runtime if the game was successful or not
-    end = server_runtime()
+        clear_screen()
+        
+        #tells the runtime if the game was successful or not
+        end = server_runtime()
 
-    conn.close()
-    SERVER.close()
+        conn.close()
+        SERVER.close()
 
+    except OSError as e:
+        if e.errno == errno.EADDRINUSE:
+            print("Port is already in use. Please choose a different port.")
+        return False
     return end
 
 #client part of the script
@@ -688,6 +696,10 @@ def player_runtime():
     while RUNNING == True:
         try:
             data = CLIENT.recv(1024).decode()
+
+        #these help with clientside errors
+        #however, im not exactly sure if they handle anything
+        #my testing indicates that they don't. However they are added anyways
         except ConnectionResetError:
             print(f"Connection forcibly reset.")
             return False
@@ -770,5 +782,4 @@ end = multiplayer()
 if end == True:
     print("Game exited with True status: Success")
 else:
-    clear_screen()
     print("Game exited with False status: Error")
