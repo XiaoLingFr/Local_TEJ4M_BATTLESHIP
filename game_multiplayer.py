@@ -532,9 +532,11 @@ def server_runtime():
         print(board_to_string(server_board_copy))
 
         send("Host's Ships: \n")
-        send((board_to_string(player_board_copy) + "\n"))
-        send("Your Ships: \n")
         send((board_to_string(server_board_copy) + "\n"))
+        send("Your guesses: \n")
+        send((board_to_string(player_guess)))
+        send("Your Ships: \n")
+        send((board_to_string(player_board_copy) + "\n"))
         
         end_signal()
     #of course, on a broken connection, send() wont work, and it would jump to these
