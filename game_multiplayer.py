@@ -442,7 +442,17 @@ def server_runtime():
     try:
         player_setup()
         server_setup()
-    except:
+    except ConnectionResetError:
+        print(f"Connection forcibly reset")
+        RUNNING = False
+        return False
+    except ConnectionAbortedError:
+        print(f"Connection aborted.")
+        RUNNING = False
+        return False
+    except BrokenPipeError:
+        print(f"Broken pipe.")
+        RUNNING = False
         return False
 
     #we reset the UI again
@@ -526,7 +536,8 @@ def server_runtime():
             print(f"Connection aborted.")
             RUNNING = False
             return False
-        except:
+        except BrokenPipeError:
+            print(f"Broken pipe.")
             RUNNING = False
             return False
 
@@ -570,8 +581,6 @@ def server_runtime():
     except ConnectionAbortedError:
         return False
     except BrokenPipeError:
-        return False
-    except:
         return False
 
     return True
@@ -679,7 +688,14 @@ def player_runtime():
     while RUNNING == True:
         try:
             data = CLIENT.recv(1024).decode()
-        except:
+        except ConnectionResetError:
+            print(f"Connection forcibly reset.")
+            return False
+        except ConnectionAbortedError:
+            print(f"Connection aborted.")
+            return False
+        except BrokenPipeError:
+            print(f"Broken pipe.")
             return False
         if data:
             buffer = buffer + data
