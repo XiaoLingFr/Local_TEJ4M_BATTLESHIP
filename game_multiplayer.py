@@ -438,11 +438,13 @@ def server_runtime():
     RUNNING = True
     computer_turn_count = 0
     
+    #incase users leave mid-setup
     try:
         player_setup()
         server_setup()
     except:
         return False
+
     #we reset the UI again
     clear_screen()
     clear_signal()
