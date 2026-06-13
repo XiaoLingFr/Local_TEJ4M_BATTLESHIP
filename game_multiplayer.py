@@ -1,5 +1,7 @@
 #this code will be documented as it is the most verbose and more complete version of the project
+#any code that is different in the game_singleplayer.py python script will be documented there
 
+#our imports
 import random
 import socket
 import copy
@@ -8,6 +10,7 @@ import os
 
 #this is how our clients will interact with each other
 #they use a custom language to communicate
+#this ensures that the client has ZERO access to the data on the server
 ZHAO_LANG_SYNTAX = {
     "PRINT": "PRNT",
     "IMMEDIATE REPLY": "IREP",
@@ -33,12 +36,14 @@ if os.name == "nt":
     os.system("")
     CLEAR = "cls"
 
-#This contains foundational data for battleship
+#This contains foundational data for battleship:
 #size of the board
 SIZE = 10
 
 #ships are defined in this order:
 SHIP = ["carrier", "battleship", "cruiser","submarine","destroyer"]
+
+#ship length
 SHIP_DATA = {
     "carrier": 5,
     "battleship": 4,
@@ -46,6 +51,8 @@ SHIP_DATA = {
     "submarine": 3,
     "destroyer": 2
 }
+
+#how ships are represented on the board
 SHIP_REPRESENTATION = {
     "carrier": 'C',
     "battleship": 'B',
@@ -54,8 +61,10 @@ SHIP_REPRESENTATION = {
     "destroyer": 'D'
 }
 
-#these are representations for the ship
+#open water
 UNKNOWN = '~'
+
+#what a guess could be
 HIT = 'X'
 MISS = 'O'
 
@@ -63,10 +72,13 @@ MISS = 'O'
 VERTICAL = "V"
 HORIZONTAL = "H"
 
+#orientations are laid out like this to make it easier to make a randomized setup
 ORIENTATIONS = [VERTICAL,HORIZONTAL]
 
-#these are for conversions when the user wants to input a co-ordinate
+#these are for conversions for the board_to_string function
 board_header = "X A B C D E F G H I J"
+
+#this is how the conversion is made
 board_header_to_column = {
     "A" : 0,
     "B" : 1,
@@ -132,6 +144,7 @@ server_guess = [
     ['~','~','~','~','~','~','~','~','~','~']
 ]
 
+#We keep a copy of the original boards so that cheating becomes harder (we show this at the end of the game)
 player_board_copy = []
 server_board_copy = []
 
@@ -140,7 +153,8 @@ server_board_copy = []
 def clear_screen():
     os.system(CLEAR)
 
-#main menu
+#This is the main menu
+#Player decides to be server or player
 def menu():
     valid_input = False
     choice = 0
@@ -154,7 +168,7 @@ def menu():
             print("Please enter a valid input")
     return choice
 
-#displays ip address for the user to know what to enter
+#gets the ip address for the user to know what to enter
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -166,7 +180,8 @@ def get_ip():
         s.close()
     return ip
 
-#this is the server side's execution of the language
+#The client side uses an interpreter with a very strict syntax
+#so i made functions that make it easier for the server to communicate with the client
 def send(text):
     conn.sendall((ZHAO_LANG_SYNTAX["PRINT"] +" "+ text + "\n"+"|").encode())
 
@@ -187,7 +202,7 @@ def end_signal():
 def clear_signal():
     conn.sendall((ZHAO_LANG_SYNTAX["CLS"] + "|").encode())
 
-#this is how boards will be displayed over the internet
+#this is how boards will be formatted to be displayed to both players
 def board_to_string(board):
     string = ""
     string = string + board_header + "\n"
@@ -199,7 +214,7 @@ def board_to_string(board):
         string = string + "\n"
     return string
 
-#this is how we check and place ships on the player's respective boards
+#this is how we check and place ships on the respective boards
 def place_ship(row, col, ship, board, orientation):
     try:
         if orientation == VERTICAL:
@@ -220,7 +235,7 @@ def place_ship(row, col, ship, board, orientation):
     except IndexError:
         return False
 
-#when players start shooting shots, this is how we convert it
+#when players start shooting shots, this is how we convert it to row and column numbers
 def input_to_coordinate(text):
     try:
         column = board_header_to_column[text[0]]
@@ -230,7 +245,6 @@ def input_to_coordinate(text):
         return None
 
 #=====SETUP=====
-
 #this is if a player wants to minimize time and use a random board
 def random_setup(board):
     for i in range(0, len(SHIP)):
@@ -321,7 +335,7 @@ def server_setup():
     return
 
 #=====Game Stuff=====
-#checks if a player has lost based on their board
+#checks if a player has lost based on their respective board
 def check_loss(board):
     #while it is entirely possible to use the data, this is a lot more solid because its cooler lol
     loss = True
@@ -365,7 +379,7 @@ def check_sunk(board, state):
                 print("Message: " + SHIP[i]+ " has sunk!")
     return
 
-#we then convert the remaining ships to a string for each side to use
+#we convert the status stored by the game to a useable string to be readable for the user
 def ship_remaining_to_string(ships):
     text = "Enemy Remaining: "
     for i in range(0,len(ships)):
@@ -376,7 +390,6 @@ def ship_remaining_to_string(ships):
 
 #while this was for the original AI
 #I decided to keep it anyways
-#because there is a huge chance that a vulnerability was caught because we put the host in their own little sandbox using functions
 def servers_turn():
     print("YOUR BOARD:")
     print(board_to_string(server_board))
@@ -418,21 +431,25 @@ def servers_turn():
 #=====Runtimes=====
 #main server runtime
 def server_runtime():
+    #clear the screen for UI
     clear_screen()
     
+    #this is how we know if the game is running or not
     RUNNING = True
     computer_turn_count = 0
     
     player_setup()
     server_setup()
 
+    #we reset the UI again
     clear_screen()
     clear_signal()
 
-    #this is just used to keep track of old player boards. However, it probably wont be used much
+    #this is just used to keep track of old player boards.
     player_board_copy = copy.deepcopy(player_board)
     server_board_copy = copy.deepcopy(server_board)
 
+    #this is to track if any of the players have lost
     player_loss = False
     server_loss = False
     
@@ -450,11 +467,13 @@ def server_runtime():
             #player's turn
             valid_move = False
             while valid_move == False:
+                #gets move
                 reply = send_and_recieve("Where to hit: ")
                 res = input_to_coordinate(reply)
                 try:
                     row, column = res
                     if res != None and res != "":
+                        #checks if the player has hit or not or has given an invalid input
                         if(player_guess[row][column] != HIT and player_guess[row][column] != MISS):
                             if server_board[row][column] != UNKNOWN:
                                 player_guess[row][column] = HIT
@@ -479,7 +498,7 @@ def server_runtime():
             
             clear_screen()
             
-            #check states of players and ships for the server
+            #checks if the server has lost or has lost a ship on this turn
             check_sunk(server_board, server_ships)
             server_loss = check_loss(server_board)
 
@@ -487,6 +506,7 @@ def server_runtime():
             if server_loss == False:
                 servers_turn()
 
+            #checks if the player has lost or has lost a ship on this turn
             player_loss = check_loss(player_board)
             check_sunk(player_board, player_ships)
             
@@ -503,10 +523,12 @@ def server_runtime():
             RUNNING = False
             return False
 
+    #when the game ends, we give a little bit of a delay for dramatic effect
     time.sleep(3)
 
     #attempt to do endgame stuff
     try:
+        #reset the UI
         clear_screen()
         clear_signal()
         if player_loss == True:
@@ -558,6 +580,7 @@ def server():
     HOST = get_ip()
     PORT = 0
     valid_port = False
+    #we get a valid port
     while valid_port == False:
         try:
             PORT = int(input("Port to listen from: "))
@@ -567,6 +590,7 @@ def server():
 
     clear_screen()
 
+    #give the user the correct IP address
     print("IP Address: " + HOST)
     print("PORT: " + str(PORT))
 
@@ -575,11 +599,14 @@ def server():
     SERVER.bind((HOST,PORT))
     SERVER.listen(1)
 
+    #wait for user
     print("Waiting for player to connect....")
     conn,addr = SERVER.accept()
     print("Connected to: ", addr)
 
     clear_screen()
+    
+    #tells the runtime if the game was successful or not
     end = server_runtime()
 
     conn.close()
@@ -631,7 +658,7 @@ def interpret(text):
 
     return
 
-#client runtime player_runtime() is legacy naming, client's version instead
+#client runtime player_runtime() is legacy naming, client's version of the game
 def player_runtime():
     global RUNNING
     buffer = ""
@@ -663,9 +690,12 @@ def player():
     valid_IP = False
     while valid_IP == False:
         try:
+            #gets an IP address
             print("Host IP: ",end="")
             HOST = input()
             CLIENT = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            
+            #checks if the IP is reachable or not
             socket.inet_aton(HOST)
             valid_IP = True
         except: 
@@ -674,6 +704,7 @@ def player():
     valid_port = False
     while valid_port == False:
         try:
+            #gets a port
             print("Host PORT: ",end="")
             PORT = int(input())
             print("\n",end="")
@@ -686,6 +717,7 @@ def player():
         print("An error has occured")
         return False
     
+    #tells the runtime if the game was successful or not
     end = player_runtime()
 
     CLIENT.close()
@@ -707,6 +739,7 @@ def multiplayer():
 
 end = multiplayer()
 
+#tells the user if the game was successful or not
 if end == True:
     print("Game exited with True status: Success")
 else:
