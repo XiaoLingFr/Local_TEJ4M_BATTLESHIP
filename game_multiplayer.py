@@ -336,6 +336,7 @@ def check_loss(board):
 player_ships = [True, True, True, True, True]
 server_ships = [True, True, True, True, True]
 
+#this is how we check if the ships have sunk. We take the status and we check if its correct, if not, update it.
 def check_sunk(board, state):
     shadow_state = [False, False, False,False, False]
     for r in range(0,SIZE):
@@ -478,22 +479,23 @@ def server_runtime():
                     send("Please enter a 2 character input.\n")
             send("===============================\n")
 
-            #check if any of host's ships has been sunk
-            check_sunk(server_board, server_ships)
             #check if player has won
             server_loss = check_loss(server_board)
-        
-            clear_screen()
 
             #server's turn
             if server_loss == False:
                 servers_turn()
 
             print("==============================")
-            check_sunk(player_board, player_ships)
             player_loss = check_loss(player_board)
 
+            #clear screen
             clear_signal()
+            clear_screen()
+
+            #check if any new boats have sunk
+            check_sunk(server_board, server_ships)
+            check_sunk(player_board, player_ships)
 
         #handle mid disconnects
         except ConnectionResetError:
@@ -530,9 +532,7 @@ def server_runtime():
         print(board_to_string(server_board_copy))
 
         send("Host's Ships: \n")
-        send((board_to_string(server) + "\n"))
-        send("Your guesses: \n")
-        send((board_to_string(player_guess) + "\n"))
+        send((board_to_string(player_board_copy) + "\n"))
         send("Your Ships: \n")
         send((board_to_string(server_board_copy) + "\n"))
         
