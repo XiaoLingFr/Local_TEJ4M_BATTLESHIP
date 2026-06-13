@@ -571,6 +571,8 @@ def server_runtime():
         return False
     except BrokenPipeError:
         return False
+    except:
+        return False
 
     return True
 
