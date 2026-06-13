@@ -250,7 +250,6 @@ def player_setup():
     while valid_input == False:
         try:
             choice = int((send_and_recieve("Would you like a randomized setup? [1: Yes 2: No]\n"))[0])
-            print(choice)
             if choice == 1 or choice == 2:
                 valid_input = True
         except:
