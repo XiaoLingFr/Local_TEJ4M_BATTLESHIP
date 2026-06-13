@@ -750,4 +750,5 @@ end = multiplayer()
 if end == True:
     print("Game exited with True status: Success")
 else:
+    clear_screen()
     print("Game exited with False status: Error")
