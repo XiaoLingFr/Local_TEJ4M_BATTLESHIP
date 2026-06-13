@@ -438,9 +438,11 @@ def server_runtime():
     RUNNING = True
     computer_turn_count = 0
     
-    player_setup()
-    server_setup()
-
+    try:
+        player_setup()
+        server_setup()
+    except:
+        return False
     #we reset the UI again
     clear_screen()
     clear_signal()
@@ -522,6 +524,9 @@ def server_runtime():
             print(f"Connection aborted.")
             RUNNING = False
             return False
+        except:
+            RUNNING = False
+            return False
 
     #when the game ends, we give a little bit of a delay for dramatic effect
     time.sleep(3)
@@ -561,6 +566,8 @@ def server_runtime():
     except ConnectionResetError:
         return False
     except ConnectionAbortedError:
+        return False
+    except BrokenPipeError:
         return False
 
     return True
