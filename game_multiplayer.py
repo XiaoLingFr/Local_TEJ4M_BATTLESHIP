@@ -441,6 +441,8 @@ def server_runtime():
     while player_loss == False and server_loss == False and RUNNING == True:
         #handling players leaving mid match
         try:
+            clear_screen()
+
             send("YOUR BOARD:\n")
             send(board_to_string(player_board) + "\n")
             send("YOUR GUESSING BOARD:\n")
@@ -477,25 +479,20 @@ def server_runtime():
                         send("Try inputting a valid co-ordinate\n")
                 except:
                     send("Please enter a 2 character input.\n")
-            send("===============================\n")
 
-            #check if player has won
+            #check states of players and ships for the server
+            check_sunk(server_board, server_ships)
             server_loss = check_loss(server_board)
 
             #server's turn
             if server_loss == False:
                 servers_turn()
 
-            print("==============================")
             player_loss = check_loss(player_board)
-
+            check_sunk(player_board, player_ships)
+            
             #clear screen
             clear_signal()
-            clear_screen()
-
-            #check if any new boats have sunk
-            check_sunk(server_board, server_ships)
-            check_sunk(player_board, player_ships)
 
         #handle mid disconnects
         except ConnectionResetError:
